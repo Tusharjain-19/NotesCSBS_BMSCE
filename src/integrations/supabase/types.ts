@@ -119,7 +119,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      resource_type: "notes" | "qb" | "cie1" | "cie2" | "cie3" | "see" | "lab"
+      resource_type: "notes" | "cie1" | "cie2" | "cie3" | "see"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -247,7 +247,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      resource_type: ["notes", "qb", "cie1", "cie2", "cie3", "see", "lab"],
+      resource_type: ["notes", "cie1", "cie2", "cie3", "see"],
     },
   },
 } as const

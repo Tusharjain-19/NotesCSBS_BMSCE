@@ -6,31 +6,37 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { ResourceCard } from "@/components/ResourceCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { 
   BookOpen, 
-  HelpCircle, 
   FileCheck, 
   GraduationCap, 
-  FlaskConical 
+  ChevronDown
 } from "lucide-react";
+import { useState } from "react";
 
-type ResourceType = "notes" | "qb" | "cie1" | "cie2" | "cie3" | "see" | "lab";
+type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see";
 
-const resourceTypeConfig: Record<ResourceType, { label: string; icon: typeof BookOpen; description: string }> = {
-  notes: { label: "Notes", icon: BookOpen, description: "Study materials and notes" },
-  qb: { label: "Question Bank", icon: HelpCircle, description: "Practice questions" },
-  cie1: { label: "CIE-1", icon: FileCheck, description: "First internal exam" },
-  cie2: { label: "CIE-2", icon: FileCheck, description: "Second internal exam" },
-  cie3: { label: "CIE-3", icon: FileCheck, description: "Third internal exam" },
-  see: { label: "SEE", icon: GraduationCap, description: "End semester papers" },
-  lab: { label: "Lab", icon: FlaskConical, description: "Lab materials" },
-};
+interface Resource {
+  id: number;
+  title: string;
+  file_url: string;
+  type: ResourceType;
+  unit: string | null;
+  year: number | null;
+}
 
 const Subject = () => {
   const { id } = useParams<{ id: string }>();
   const subjectId = parseInt(id || "0");
+  const [openUnits, setOpenUnits] = useState<Record<number, boolean>>({
+    1: true, 2: true, 3: true, 4: true, 5: true
+  });
 
   const { data: subject, isLoading: subjectLoading } = useQuery({
     queryKey: ["subject", subjectId],
@@ -52,27 +58,39 @@ const Subject = () => {
         .from("resources")
         .select("*")
         .eq("subject_id", subjectId)
-        .order("year", { ascending: false })
-        .order("unit");
+        .order("unit")
+        .order("year", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Resource[];
     },
   });
 
   const isLoading = subjectLoading || resourcesLoading;
 
-  const getResourcesByType = (type: ResourceType) => {
-    return resources?.filter((r) => r.type === type) || [];
+  // Get notes grouped by unit
+  const getNotesByUnit = (unitNumber: number) => {
+    return resources?.filter(r => r.type === "notes" && r.unit === `Unit ${unitNumber}`) || [];
   };
 
-  const getResourceCount = (type: ResourceType) => {
-    return getResourcesByType(type).length;
+  // Get CIE papers by type
+  const getCIEPapers = (type: "cie1" | "cie2" | "cie3") => {
+    return resources?.filter(r => r.type === type) || [];
   };
 
-  // Determine which tabs to show based on subject type
-  const availableTabs: ResourceType[] = subject?.is_lab 
-    ? ["lab", "notes"]
-    : ["notes", "qb", "cie1", "cie2", "cie3", "see"];
+  // Get SEE papers
+  const getSEEPapers = () => {
+    return resources?.filter(r => r.type === "see") || [];
+  };
+
+  const toggleUnit = (unit: number) => {
+    setOpenUnits(prev => ({ ...prev, [unit]: !prev[unit] }));
+  };
+
+  const cieConfig = [
+    { type: "cie1" as const, label: "CIE-1 Question Papers" },
+    { type: "cie2" as const, label: "CIE-2 Question Papers" },
+    { type: "cie3" as const, label: "CIE-3 Question Papers" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,6 +107,7 @@ const Subject = () => {
           ]} 
         />
 
+        {/* Subject Header */}
         <div className="mb-8 animate-fade-in">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -108,79 +127,151 @@ const Subject = () => {
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-full max-w-2xl" />
-            <div className="grid gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 rounded-lg" />
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-48" />
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 rounded-lg" />
               ))}
             </div>
           </div>
         ) : (
-          <Tabs defaultValue={availableTabs[0]} className="animate-fade-in">
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 mb-6">
-              {availableTabs.map((type) => {
-                const config = resourceTypeConfig[type];
-                const count = getResourceCount(type);
-                const Icon = config.icon;
-                
-                return (
-                  <TabsTrigger 
-                    key={type}
-                    value={type}
-                    className="flex items-center gap-2 px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{config.label}</span>
-                    {count > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1.5 text-xs">
-                        {count}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+          <div className="space-y-10">
+            {/* SECTION 1: NOTES (Unit-wise) */}
+            <section className="animate-fade-in">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Notes</h2>
+                  <p className="text-sm text-muted-foreground">Study materials organized by unit</p>
+                </div>
+              </div>
 
-            {availableTabs.map((type) => {
-              const typeResources = getResourcesByType(type);
-              const config = resourceTypeConfig[type];
-
-              return (
-                <TabsContent key={type} value={type} className="mt-0">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {config.label}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {config.description}
-                    </p>
-                  </div>
-
-                  {typeResources.length > 0 ? (
-                    <div className="grid gap-3">
-                      {typeResources.map((resource, index) => (
-                        <ResourceCard
-                          key={resource.id}
-                          id={resource.id}
-                          title={resource.title}
-                          fileUrl={resource.file_url}
-                          unit={resource.unit}
-                          year={resource.year}
-                          index={index}
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((unitNum) => {
+                  const unitNotes = getNotesByUnit(unitNum);
+                  return (
+                    <Collapsible
+                      key={unitNum}
+                      open={openUnits[unitNum]}
+                      onOpenChange={() => toggleUnit(unitNum)}
+                    >
+                      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-card p-4 text-left transition-all hover:border-primary/30 hover:bg-accent/50">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="font-semibold">
+                            Unit {unitNum}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {unitNotes.length} {unitNotes.length === 1 ? "file" : "files"}
+                          </span>
+                        </div>
+                        <ChevronDown 
+                          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                            openUnits[unitNum] ? "rotate-180" : ""
+                          }`} 
                         />
-                      ))}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3">
+                        {unitNotes.length > 0 ? (
+                          <div className="grid gap-3 pl-4 border-l-2 border-primary/20 ml-4">
+                            {unitNotes.map((resource, index) => (
+                              <ResourceCard
+                                key={resource.id}
+                                id={resource.id}
+                                title={resource.title}
+                                fileUrl={resource.file_url}
+                                year={resource.year}
+                                index={index}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="pl-4 border-l-2 border-primary/20 ml-4 py-4">
+                            <p className="text-sm text-muted-foreground">No notes available for Unit {unitNum}</p>
+                          </div>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* SECTION 2: CIE Papers (Exam-wise) */}
+            <section className="animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                  <FileCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">CIE Papers</h2>
+                  <p className="text-sm text-muted-foreground">Continuous Internal Evaluation question papers</p>
+                </div>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-3">
+                {cieConfig.map(({ type, label }) => {
+                  const papers = getCIEPapers(type);
+                  return (
+                    <div key={type} className="rounded-lg border border-border/50 bg-card p-4">
+                      <h3 className="font-semibold text-foreground mb-3">{label}</h3>
+                      {papers.length > 0 ? (
+                        <div className="space-y-3">
+                          {papers.map((resource, index) => (
+                            <ResourceCard
+                              key={resource.id}
+                              id={resource.id}
+                              title={resource.title}
+                              fileUrl={resource.file_url}
+                              year={resource.year}
+                              index={index}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-4">No papers available</p>
+                      )}
                     </div>
-                  ) : (
-                    <EmptyState 
-                      title={`No ${config.label.toLowerCase()} available`}
-                      description={`${config.label} materials will be added soon. Check back later!`}
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* SECTION 3: SEE Papers */}
+            <section className="animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">SEE Papers</h2>
+                  <p className="text-sm text-muted-foreground">Semester End Examination previous year papers</p>
+                </div>
+              </div>
+
+              {getSEEPapers().length > 0 ? (
+                <div className="grid gap-3">
+                  {getSEEPapers().map((resource, index) => (
+                    <ResourceCard
+                      key={resource.id}
+                      id={resource.id}
+                      title={resource.title}
+                      fileUrl={resource.file_url}
+                      year={resource.year}
+                      index={index}
                     />
-                  )}
-                </TabsContent>
-              );
-            })}
-          </Tabs>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState 
+                  title="No SEE papers available"
+                  description="Previous year SEE papers will be added soon. Check back later!"
+                />
+              )}
+            </section>
+          </div>
         )}
       </main>
     </div>

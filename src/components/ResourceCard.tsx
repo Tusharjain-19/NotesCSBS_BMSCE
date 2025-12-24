@@ -6,12 +6,11 @@ interface ResourceCardProps {
   id: number;
   title: string;
   fileUrl: string;
-  unit?: string | null;
   year?: number | null;
   index: number;
 }
 
-export function ResourceCard({ id, title, fileUrl, unit, year, index }: ResourceCardProps) {
+export function ResourceCard({ id, title, fileUrl, year, index }: ResourceCardProps) {
   return (
     <a 
       href={fileUrl} 
@@ -32,19 +31,12 @@ export function ResourceCard({ id, title, fileUrl, unit, year, index }: Resource
               <h4 className="font-medium text-foreground leading-snug pr-6 line-clamp-2">
                 {title}
               </h4>
-              <div className="flex items-center gap-2 mt-2">
-                {unit && (
-                  <Badge variant="outline" className="text-xs">
-                    {unit}
-                  </Badge>
-                )}
-                {year && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {year}
-                  </div>
-                )}
-              </div>
+              {year && (
+                <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  {year}
+                </div>
+              )}
             </div>
             <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
           </div>

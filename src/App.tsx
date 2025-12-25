@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Semester from "./pages/Semester";
 import Subject from "./pages/Subject";
 import Contributors from "./pages/Contributors";
+import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/semester/:id" element={<Semester />} />
           <Route path="/subject/:id" element={<Subject />} />
           <Route path="/contributors" element={<Contributors />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

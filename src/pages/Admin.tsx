@@ -11,10 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, LogOut, BookOpen, FileText, GraduationCap, Upload, Link } from "lucide-react";
+import { Loader2, Plus, Trash2, LogOut, BookOpen, FileText, GraduationCap, Upload, Link, Library } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 
-type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see";
+type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see" | "book";
 
 interface Subject {
   id: number;
@@ -349,6 +349,7 @@ const Admin = () => {
       cie2: "CIE-2",
       cie3: "CIE-3",
       see: "SEE",
+      book: "Book",
     };
     return labels[type];
   };
@@ -356,6 +357,7 @@ const Admin = () => {
   const getTypeIcon = (type: ResourceType) => {
     if (type === "notes") return <BookOpen className="h-4 w-4" />;
     if (type === "see") return <GraduationCap className="h-4 w-4" />;
+    if (type === "book") return <Library className="h-4 w-4" />;
     return <FileText className="h-4 w-4" />;
   };
 
@@ -436,16 +438,16 @@ const Admin = () => {
                   </Select>
                 </div>
 
-                {/* Resource Type */}
                 <div className="space-y-2">
                   <Label>Resource Type</Label>
                   <Tabs value={resourceType} onValueChange={(v) => setResourceType(v as ResourceType)}>
-                    <TabsList className="grid w-full grid-cols-5">
+                    <TabsList className="grid w-full grid-cols-6">
                       <TabsTrigger value="notes">Notes</TabsTrigger>
                       <TabsTrigger value="cie1">CIE-1</TabsTrigger>
                       <TabsTrigger value="cie2">CIE-2</TabsTrigger>
                       <TabsTrigger value="cie3">CIE-3</TabsTrigger>
                       <TabsTrigger value="see">SEE</TabsTrigger>
+                      <TabsTrigger value="book">Book</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>

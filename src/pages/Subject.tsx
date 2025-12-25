@@ -31,6 +31,12 @@ interface Resource {
   year: number | null;
 }
 
+interface Unit {
+  id: number;
+  unit_number: number;
+  unit_name: string;
+}
+
 const Subject = () => {
   const { id } = useParams<{ id: string }>();
   const subjectId = parseInt(id || "0");
@@ -65,7 +71,26 @@ const Subject = () => {
     },
   });
 
+  const { data: units } = useQuery({
+    queryKey: ["units", subjectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("units")
+        .select("*")
+        .eq("subject_id", subjectId)
+        .order("unit_number");
+      if (error) throw error;
+      return data as Unit[];
+    },
+  });
+
   const isLoading = subjectLoading || resourcesLoading;
+
+  // Get unit name from units table
+  const getUnitName = (unitNumber: number) => {
+    const unit = units?.find(u => u.unit_number === unitNumber);
+    return unit?.unit_name || `Unit ${unitNumber}`;
+  };
 
   // Get notes grouped by unit
   const getNotesByUnit = (unitNumber: number) => {
@@ -91,6 +116,9 @@ const Subject = () => {
     { type: "cie2" as const, label: "CIE-2 Question Papers" },
     { type: "cie3" as const, label: "CIE-3 Question Papers" },
   ];
+
+  // Check if subject has units (Sem 7 & 8 subjects don't have units)
+  const hasUnits = units && units.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,46 +165,131 @@ const Subject = () => {
           </div>
         ) : (
           <div className="space-y-10">
-            {/* SECTION 1: NOTES (Unit-wise) */}
-            <section className="animate-fade-in">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <BookOpen className="h-5 w-5" />
+            {/* SECTION 1: NOTES (Unit-wise) - Only show for subjects with units */}
+            {hasUnits && (
+              <section className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">Notes</h2>
+                    <p className="text-sm text-muted-foreground">Study materials organized by unit</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">Notes</h2>
-                  <p className="text-sm text-muted-foreground">Study materials organized by unit</p>
-                </div>
-              </div>
 
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((unitNum) => {
-                  const unitNotes = getNotesByUnit(unitNum);
-                  return (
-                    <Collapsible
-                      key={unitNum}
-                      open={openUnits[unitNum]}
-                      onOpenChange={() => toggleUnit(unitNum)}
-                    >
-                      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-card p-4 text-left transition-all hover:border-primary/30 hover:bg-accent/50">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="secondary" className="font-semibold">
-                            Unit {unitNum}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {unitNotes.length} {unitNotes.length === 1 ? "file" : "files"}
-                          </span>
-                        </div>
-                        <ChevronDown 
-                          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
-                            openUnits[unitNum] ? "rotate-180" : ""
-                          }`} 
-                        />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-3">
-                        {unitNotes.length > 0 ? (
-                          <div className="grid gap-3 pl-4 border-l-2 border-primary/20 ml-4">
-                            {unitNotes.map((resource, index) => (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((unitNum) => {
+                    const unitNotes = getNotesByUnit(unitNum);
+                    const unitName = getUnitName(unitNum);
+                    return (
+                      <Collapsible
+                        key={unitNum}
+                        open={openUnits[unitNum]}
+                        onOpenChange={() => toggleUnit(unitNum)}
+                      >
+                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-card p-4 text-left transition-all hover:border-primary/30 hover:bg-accent/50">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="font-semibold shrink-0">
+                              Unit {unitNum}
+                            </Badge>
+                            <span className="text-sm text-foreground font-medium">
+                              {unitName}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              ({unitNotes.length} {unitNotes.length === 1 ? "file" : "files"})
+                            </span>
+                          </div>
+                          <ChevronDown 
+                            className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                              openUnits[unitNum] ? "rotate-180" : ""
+                            }`} 
+                          />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pt-3">
+                          {unitNotes.length > 0 ? (
+                            <div className="grid gap-3 pl-4 border-l-2 border-primary/20 ml-4">
+                              {unitNotes.map((resource, index) => (
+                                <ResourceCard
+                                  key={resource.id}
+                                  id={resource.id}
+                                  title={resource.title}
+                                  fileUrl={resource.file_url}
+                                  year={resource.year}
+                                  index={index}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="pl-4 border-l-2 border-primary/20 ml-4 py-4">
+                              <p className="text-sm text-muted-foreground">No notes available yet</p>
+                            </div>
+                          )}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* For Sem 7 & 8 subjects without units - show simple notes section */}
+            {!hasUnits && (
+              <section className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">Resources</h2>
+                    <p className="text-sm text-muted-foreground">Study materials and documents</p>
+                  </div>
+                </div>
+
+                {resources && resources.filter(r => r.type === "notes").length > 0 ? (
+                  <div className="grid gap-3">
+                    {resources.filter(r => r.type === "notes").map((resource, index) => (
+                      <ResourceCard
+                        key={resource.id}
+                        id={resource.id}
+                        title={resource.title}
+                        fileUrl={resource.file_url}
+                        year={resource.year}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState 
+                    title="No resources available"
+                    description="Resources will be added soon. Check back later!"
+                  />
+                )}
+              </section>
+            )}
+
+            {/* SECTION 2: CIE Papers (Exam-wise) - Only show for subjects with units */}
+            {hasUnits && (
+              <section className="animate-fade-in" style={{ animationDelay: "100ms" }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                    <FileCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">CIE Papers</h2>
+                    <p className="text-sm text-muted-foreground">Continuous Internal Evaluation question papers</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-3">
+                  {cieConfig.map(({ type, label }) => {
+                    const papers = getCIEPapers(type);
+                    return (
+                      <div key={type} className="rounded-lg border border-border/50 bg-card p-4">
+                        <h3 className="font-semibold text-foreground mb-3">{label}</h3>
+                        {papers.length > 0 ? (
+                          <div className="space-y-3">
+                            {papers.map((resource, index) => (
                               <ResourceCard
                                 key={resource.id}
                                 id={resource.id}
@@ -188,89 +301,49 @@ const Subject = () => {
                             ))}
                           </div>
                         ) : (
-                          <div className="pl-4 border-l-2 border-primary/20 ml-4 py-4">
-                            <p className="text-sm text-muted-foreground">No notes available for Unit {unitNum}</p>
-                          </div>
+                          <p className="text-sm text-muted-foreground py-4">No papers available</p>
                         )}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  );
-                })}
-              </div>
-            </section>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-            {/* SECTION 2: CIE Papers (Exam-wise) */}
-            <section className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                  <FileCheck className="h-5 w-5" />
+            {/* SECTION 3: SEE Papers - Only show for subjects with units */}
+            {hasUnits && (
+              <section className="animate-fade-in" style={{ animationDelay: "200ms" }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">SEE Papers</h2>
+                    <p className="text-sm text-muted-foreground">Semester End Examination previous year papers</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">CIE Papers</h2>
-                  <p className="text-sm text-muted-foreground">Continuous Internal Evaluation question papers</p>
-                </div>
-              </div>
 
-              <div className="grid gap-6 md:grid-cols-3">
-                {cieConfig.map(({ type, label }) => {
-                  const papers = getCIEPapers(type);
-                  return (
-                    <div key={type} className="rounded-lg border border-border/50 bg-card p-4">
-                      <h3 className="font-semibold text-foreground mb-3">{label}</h3>
-                      {papers.length > 0 ? (
-                        <div className="space-y-3">
-                          {papers.map((resource, index) => (
-                            <ResourceCard
-                              key={resource.id}
-                              id={resource.id}
-                              title={resource.title}
-                              fileUrl={resource.file_url}
-                              year={resource.year}
-                              index={index}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground py-4">No papers available</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* SECTION 3: SEE Papers */}
-            <section className="animate-fade-in" style={{ animationDelay: "200ms" }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">SEE Papers</h2>
-                  <p className="text-sm text-muted-foreground">Semester End Examination previous year papers</p>
-                </div>
-              </div>
-
-              {getSEEPapers().length > 0 ? (
-                <div className="grid gap-3">
-                  {getSEEPapers().map((resource, index) => (
-                    <ResourceCard
-                      key={resource.id}
-                      id={resource.id}
-                      title={resource.title}
-                      fileUrl={resource.file_url}
-                      year={resource.year}
-                      index={index}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState 
-                  title="No SEE papers available"
-                  description="Previous year SEE papers will be added soon. Check back later!"
-                />
-              )}
-            </section>
+                {getSEEPapers().length > 0 ? (
+                  <div className="grid gap-3">
+                    {getSEEPapers().map((resource, index) => (
+                      <ResourceCard
+                        key={resource.id}
+                        id={resource.id}
+                        title={resource.title}
+                        fileUrl={resource.file_url}
+                        year={resource.year}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState 
+                    title="No SEE papers available"
+                    description="Previous year SEE papers will be added soon. Check back later!"
+                  />
+                )}
+              </section>
+            )}
           </div>
         )}
       </main>

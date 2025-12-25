@@ -41,7 +41,7 @@ const Subject = () => {
   const { id } = useParams<{ id: string }>();
   const subjectId = parseInt(id || "0");
   const [openUnits, setOpenUnits] = useState<Record<number, boolean>>({
-    1: true, 2: true, 3: true, 4: true, 5: true
+    1: false, 2: false, 3: false, 4: false, 5: false
   });
 
   const { data: subject, isLoading: subjectLoading } = useQuery({

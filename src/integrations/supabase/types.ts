@@ -111,6 +111,38 @@ export type Database = {
           },
         ]
       }
+      units: {
+        Row: {
+          created_at: string
+          id: number
+          subject_id: number
+          unit_name: string
+          unit_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          subject_id: number
+          unit_name: string
+          unit_number: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          subject_id?: number
+          unit_name?: string
+          unit_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

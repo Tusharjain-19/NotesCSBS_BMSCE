@@ -55,8 +55,9 @@ const Admin = () => {
   const [fileUrl, setFileUrl] = useState("");
   const [year, setYear] = useState<string>("");
   const [uploadMode, setUploadMode] = useState<"link" | "file">("link");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const navigate = useNavigate();
@@ -184,32 +185,34 @@ const Admin = () => {
 
   // Add resource mutation
   const addResourceMutation = useMutation({
-    mutationFn: async (finalFileUrl: string) => {
-      const resourceData = {
-        subject_id: parseInt(selectedSubject),
-        title: title.trim(),
-        file_url: finalFileUrl,
-        type: resourceType,
-        unit: resourceType === "notes" && selectedUnit && selectedUnit !== "none" ? `Unit ${selectedUnit}` : null,
-        year: year ? parseInt(year) : null,
-      };
+    mutationFn: async (resources: { title: string; fileUrl: string }[]) => {
+      for (const res of resources) {
+        const resourceData = {
+          subject_id: parseInt(selectedSubject),
+          title: res.title.trim(),
+          file_url: res.fileUrl,
+          type: resourceType,
+          unit: resourceType === "notes" && selectedUnit && selectedUnit !== "none" ? `Unit ${selectedUnit}` : null,
+          year: year ? parseInt(year) : null,
+        };
 
-      const { error } = await supabase.from("resources").insert(resourceData);
-      if (error) throw error;
+        const { error } = await supabase.from("resources").insert(resourceData);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Resource added successfully!" });
+      toast({ title: "Success", description: "Resources added successfully!" });
       setTitle("");
       setFileUrl("");
       setYear("");
-      setSelectedFile(null);
+      setSelectedFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["resources", selectedSubject] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to add resource",
+        description: error.message || "Failed to add resources",
         variant: "destructive",
       });
     },
@@ -245,28 +248,32 @@ const Admin = () => {
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedSubject || !title.trim()) {
+    if (!selectedSubject) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please select a subject",
         variant: "destructive",
       });
       return;
     }
 
-    if (uploadMode === "link" && !fileUrl.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide a Google Drive link",
-        variant: "destructive",
-      });
+    if (uploadMode === "link") {
+      if (!title.trim() || !fileUrl.trim()) {
+        toast({
+          title: "Error",
+          description: "Please provide title and Google Drive link",
+          variant: "destructive",
+        });
+        return;
+      }
+      addResourceMutation.mutate([{ title: title.trim(), fileUrl: fileUrl.trim() }]);
       return;
     }
 
-    if (uploadMode === "file" && !selectedFile) {
+    if (uploadMode === "file" && selectedFiles.length === 0) {
       toast({
         title: "Error",
-        description: "Please select a file to upload",
+        description: "Please select at least one file to upload",
         variant: "destructive",
       });
       return;
@@ -274,32 +281,40 @@ const Admin = () => {
 
     try {
       setIsUploading(true);
-      let finalUrl = fileUrl.trim();
+      const uploadedResources: { title: string; fileUrl: string }[] = [];
       
-      if (uploadMode === "file" && selectedFile) {
-        finalUrl = await uploadFile(selectedFile);
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        setUploadProgress(`Uploading ${i + 1}/${selectedFiles.length}: ${file.name}`);
+        const url = await uploadFile(file);
+        const fileTitle = file.name.replace(/\.[^/.]+$/, "");
+        uploadedResources.push({ title: fileTitle, fileUrl: url });
       }
       
-      addResourceMutation.mutate(finalUrl);
+      setUploadProgress("");
+      addResourceMutation.mutate(uploadedResources);
     } catch (error: any) {
       toast({
         title: "Upload Error",
-        description: error.message || "Failed to upload file",
+        description: error.message || "Failed to upload files",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      if (!title.trim()) {
-        setTitle(file.name.replace(/\.[^/.]+$/, ""));
-      }
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setSelectedFiles(Array.from(files));
     }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // Loading state
@@ -455,16 +470,18 @@ const Admin = () => {
                   </div>
                 )}
 
-                {/* Title */}
-                <div className="space-y-2">
-                  <Label>Title *</Label>
-                  <Input
-                    placeholder="e.g., Unit 1 Notes - Introduction"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
-                </div>
+                {/* Title - Only shown for link mode */}
+                {uploadMode === "link" && (
+                  <div className="space-y-2">
+                    <Label>Title *</Label>
+                    <Input
+                      placeholder="e.g., Unit 1 Notes - Introduction"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
 
                 {/* Upload Mode Toggle */}
                 <div className="space-y-2">
@@ -511,18 +528,43 @@ const Admin = () => {
                 {/* File Upload */}
                 {uploadMode === "file" && (
                   <div className="space-y-2">
-                    <Label>Select File *</Label>
+                    <Label>Select Files *</Label>
                     <Input
                       ref={fileInputRef}
                       type="file"
-                      accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4"
+                      multiple
+                      accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.c,.cpp,.py,.java,.js,.ts,.h"
                       onChange={handleFileChange}
                       className="cursor-pointer"
                     />
-                    {selectedFile && (
-                      <p className="text-xs text-muted-foreground">
-                        Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                      </p>
+                    {selectedFiles.length > 0 && (
+                      <div className="space-y-1 mt-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {selectedFiles.length} file(s) selected:
+                        </p>
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between text-xs bg-muted/50 rounded px-2 py-1">
+                            <span className="truncate flex-1 mr-2">{file.name}</span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 text-destructive hover:text-destructive"
+                                onClick={() => removeFile(index)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {uploadProgress && (
+                      <p className="text-xs text-primary font-medium">{uploadProgress}</p>
                     )}
                   </div>
                 )}
@@ -553,7 +595,9 @@ const Admin = () => {
                   ) : (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      Add Resource
+                      {uploadMode === "file" && selectedFiles.length > 1 
+                        ? `Add ${selectedFiles.length} Resources` 
+                        : "Add Resource"}
                     </>
                   )}
                 </Button>

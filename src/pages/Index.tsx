@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { SemesterCard } from "@/components/SemesterCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SpaceBackground } from "@/components/SpaceBackground";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import bmsceLogo from "@/assets/bmsce-logo.png";
 
 const Index = () => {
@@ -18,20 +20,32 @@ const Index = () => {
     },
   });
 
+  const heroAnimation = useScrollAnimation();
+  const semestersAnimation = useScrollAnimation();
+  const footerAnimation = useScrollAnimation();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-primary/5 via-background to-background">
+        <SpaceBackground />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.1),transparent_50%)]" />
         <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="relative flex flex-col items-center text-center animate-fade-in-up">
-            <div className="mb-6 animate-float">
+          <div 
+            ref={heroAnimation.ref}
+            className={`relative flex flex-col items-center text-center transition-all duration-700 ${
+              heroAnimation.isVisible 
+                ? "opacity-100 translate-y-0" 
+                : "opacity-0 translate-y-8"
+            }`}
+          >
+            <div className="mb-6 animate-[float_3s_ease-in-out_infinite]">
               <img 
                 src={bmsceLogo} 
                 alt="BMSCE Logo" 
-                className="h-24 w-24 md:h-32 md:w-32 object-contain drop-shadow-lg"
+                className="h-32 w-32 md:h-44 md:w-44 lg:h-52 lg:w-52 object-contain drop-shadow-lg"
               />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 tracking-tight">
@@ -49,7 +63,14 @@ const Index = () => {
 
       {/* Semesters Section */}
       <main className="container mx-auto px-4 py-12">
-        <div className="mb-8 animate-fade-in">
+        <div 
+          ref={semestersAnimation.ref}
+          className={`mb-8 transition-all duration-700 delay-100 ${
+            semestersAnimation.isVisible 
+              ? "opacity-100 translate-y-0" 
+              : "opacity-0 translate-y-8"
+          }`}
+        >
           <h2 className="text-2xl font-semibold text-foreground mb-2">
             Select Your Semester
           </h2>
@@ -67,20 +88,36 @@ const Index = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {semesters?.map((semester, index) => (
-              <SemesterCard
+              <div
                 key={semester.id}
-                id={semester.id}
-                name={semester.name}
-                order={semester.order}
-                index={index}
-              />
+                className={`transition-all duration-500 ${
+                  semestersAnimation.isVisible 
+                    ? "opacity-100 translate-y-0" 
+                    : "opacity-0 translate-y-8"
+                }`}
+                style={{ transitionDelay: `${index * 75}ms` }}
+              >
+                <SemesterCard
+                  id={semester.id}
+                  name={semester.name}
+                  order={semester.order}
+                  index={index}
+                />
+              </div>
             ))}
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-8 mt-12">
+      <footer 
+        ref={footerAnimation.ref}
+        className={`border-t border-border bg-card/50 py-8 mt-12 transition-all duration-700 ${
+          footerAnimation.isVisible 
+            ? "opacity-100 translate-y-0" 
+            : "opacity-0 translate-y-4"
+        }`}
+      >
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
             Made with ❤️ for CSBS students at BMSCE
@@ -90,6 +127,13 @@ const Index = () => {
           </p>
         </div>
       </footer>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
     </div>
   );
 };

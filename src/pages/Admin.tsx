@@ -190,7 +190,7 @@ const Admin = () => {
         title: title.trim(),
         file_url: finalFileUrl,
         type: resourceType,
-        unit: resourceType === "notes" && selectedUnit ? `Unit ${selectedUnit}` : null,
+        unit: resourceType === "notes" && selectedUnit && selectedUnit !== "none" ? `Unit ${selectedUnit}` : null,
         year: year ? parseInt(year) : null,
       };
 
@@ -444,13 +444,12 @@ const Admin = () => {
                         <SelectValue placeholder="Select unit (or leave empty for books)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No Unit (Books/QB)</SelectItem>
+                        <SelectItem value="none">No Unit (Books/QB)</SelectItem>
                         {units?.map((unit) => (
                           <SelectItem key={unit.id} value={unit.unit_number.toString()}>
                             Unit {unit.unit_number}: {unit.unit_name}
                           </SelectItem>
-                        ))
-                        }
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

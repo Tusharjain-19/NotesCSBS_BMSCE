@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, LogOut, BookOpen, FileText, GraduationCap } from "lucide-react";
+import { Loader2, Plus, Trash2, LogOut, BookOpen, FileText, GraduationCap, Upload, Link } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 
 type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see";
@@ -54,6 +54,10 @@ const Admin = () => {
   const [title, setTitle] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [year, setYear] = useState<string>("");
+  const [uploadMode, setUploadMode] = useState<"link" | "file">("link");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -159,13 +163,32 @@ const Admin = () => {
     enabled: !!selectedSubject,
   });
 
+  // Upload file to storage
+  const uploadFile = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${selectedSubject}/${fileName}`;
+    
+    const { data, error } = await supabase.storage
+      .from('resources')
+      .upload(filePath, file);
+    
+    if (error) throw error;
+    
+    const { data: urlData } = supabase.storage
+      .from('resources')
+      .getPublicUrl(filePath);
+    
+    return urlData.publicUrl;
+  };
+
   // Add resource mutation
   const addResourceMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (finalFileUrl: string) => {
       const resourceData = {
         subject_id: parseInt(selectedSubject),
         title: title.trim(),
-        file_url: fileUrl.trim(),
+        file_url: finalFileUrl,
         type: resourceType,
         unit: resourceType === "notes" && selectedUnit ? `Unit ${selectedUnit}` : null,
         year: year ? parseInt(year) : null,
@@ -179,6 +202,8 @@ const Admin = () => {
       setTitle("");
       setFileUrl("");
       setYear("");
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["resources", selectedSubject] });
     },
     onError: (error: any) => {
@@ -217,10 +242,10 @@ const Admin = () => {
     navigate("/");
   };
 
-  const handleAddResource = (e: React.FormEvent) => {
+  const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedSubject || !title.trim() || !fileUrl.trim()) {
+    if (!selectedSubject || !title.trim()) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -229,7 +254,52 @@ const Admin = () => {
       return;
     }
 
-    addResourceMutation.mutate();
+    if (uploadMode === "link" && !fileUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a Google Drive link",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (uploadMode === "file" && !selectedFile) {
+      toast({
+        title: "Error",
+        description: "Please select a file to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      let finalUrl = fileUrl.trim();
+      
+      if (uploadMode === "file" && selectedFile) {
+        finalUrl = await uploadFile(selectedFile);
+      }
+      
+      addResourceMutation.mutate(finalUrl);
+    } catch (error: any) {
+      toast({
+        title: "Upload Error",
+        description: error.message || "Failed to upload file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      if (!title.trim()) {
+        setTitle(file.name.replace(/\.[^/.]+$/, ""));
+      }
+    }
   };
 
   // Loading state
@@ -397,19 +467,66 @@ const Admin = () => {
                   />
                 </div>
 
-                {/* Google Drive URL */}
+                {/* Upload Mode Toggle */}
                 <div className="space-y-2">
-                  <Label>Google Drive Link *</Label>
-                  <Input
-                    placeholder="https://drive.google.com/file/d/..."
-                    value={fileUrl}
-                    onChange={(e) => setFileUrl(e.target.value)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Make sure the file has "Anyone with the link can view" access
-                  </p>
+                  <Label>File Source</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={uploadMode === "link" ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setUploadMode("link")}
+                    >
+                      <Link className="h-4 w-4 mr-2" />
+                      Google Drive Link
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={uploadMode === "file" ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setUploadMode("file")}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload File
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Google Drive URL */}
+                {uploadMode === "link" && (
+                  <div className="space-y-2">
+                    <Label>Google Drive Link *</Label>
+                    <Input
+                      placeholder="https://drive.google.com/file/d/..."
+                      value={fileUrl}
+                      onChange={(e) => setFileUrl(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Make sure the file has "Anyone with the link can view" access
+                    </p>
+                  </div>
+                )}
+
+                {/* File Upload */}
+                {uploadMode === "file" && (
+                  <div className="space-y-2">
+                    <Label>Select File *</Label>
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4"
+                      onChange={handleFileChange}
+                      className="cursor-pointer"
+                    />
+                    {selectedFile && (
+                      <p className="text-xs text-muted-foreground">
+                        Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Year (optional) */}
                 <div className="space-y-2">
@@ -427,12 +544,12 @@ const Admin = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={addResourceMutation.isPending}
+                  disabled={addResourceMutation.isPending || isUploading}
                 >
-                  {addResourceMutation.isPending ? (
+                  {(addResourceMutation.isPending || isUploading) ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
+                      {isUploading ? "Uploading..." : "Adding..."}
                     </>
                   ) : (
                     <>

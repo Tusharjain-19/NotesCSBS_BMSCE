@@ -16,11 +16,12 @@ import {
   BookOpen, 
   FileCheck, 
   GraduationCap, 
-  ChevronDown
+  ChevronDown,
+  Library
 } from "lucide-react";
 import { useState } from "react";
 
-type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see";
+type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see" | "book";
 
 interface Resource {
   id: number;
@@ -105,6 +106,17 @@ const Subject = () => {
   // Get SEE papers
   const getSEEPapers = () => {
     return resources?.filter(r => r.type === "see") || [];
+  };
+
+  // Get Book resources
+  const getBooks = () => {
+    return resources?.filter(r => r.type === "book") || [];
+  };
+
+  // Check if subject is mathematics-related
+  const isMathematicsSubject = () => {
+    const name = subject?.name?.toLowerCase() || "";
+    return name.includes("math") || name.includes("maths") || name.includes("mathematics");
   };
 
   const toggleUnit = (unit: number) => {
@@ -344,6 +356,47 @@ const Subject = () => {
                 )}
               </section>
             )}
+
+            {/* SECTION 4: Books / Question Bank */}
+            <section className="animate-fade-in" style={{ animationDelay: "300ms" }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500">
+                  <Library className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    {isMathematicsSubject() ? "Question Bank" : "Books"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {isMathematicsSubject() 
+                      ? "Practice questions and problem sets" 
+                      : "Reference books and textbooks"}
+                  </p>
+                </div>
+              </div>
+
+              {getBooks().length > 0 ? (
+                <div className="grid gap-3">
+                  {getBooks().map((resource, index) => (
+                    <ResourceCard
+                      key={resource.id}
+                      id={resource.id}
+                      title={resource.title}
+                      fileUrl={resource.file_url}
+                      year={resource.year}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState 
+                  title={isMathematicsSubject() ? "No question bank available" : "No books available"}
+                  description={isMathematicsSubject() 
+                    ? "Practice questions will be added soon. Check back later!"
+                    : "Reference books will be added soon. Check back later!"}
+                />
+              )}
+            </section>
           </div>
         )}
       </main>

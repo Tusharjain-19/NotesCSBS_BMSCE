@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
+import { Users } from "lucide-react";
 import bmsceLogo from "@/assets/bmsce-logo.png";
 
 export function Header() {
@@ -13,7 +14,16 @@ export function Header() {
             <span className="text-xs text-muted-foreground">BMSCE Resources</span>
           </div>
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Link
+            to="/contributors"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Contributors</span>
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

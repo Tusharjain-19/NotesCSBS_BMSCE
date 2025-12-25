@@ -1,6 +1,7 @@
-import { ExternalLink, FileText, Calendar } from "lucide-react";
+import { useState } from "react";
+import { FileText, Calendar, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { ResourcePreviewDialog } from "./ResourcePreviewDialog";
 
 interface ResourceCardProps {
   id: number;
@@ -11,16 +12,14 @@ interface ResourceCardProps {
 }
 
 export function ResourceCard({ id, title, fileUrl, year, index }: ResourceCardProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   return (
-    <a 
-      href={fileUrl} 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="block"
-    >
+    <>
       <Card 
-        className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md animate-fade-in"
+        className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md animate-fade-in cursor-pointer"
         style={{ animationDelay: `${index * 50}ms` }}
+        onClick={() => setPreviewOpen(true)}
       >
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -38,10 +37,17 @@ export function ResourceCard({ id, title, fileUrl, year, index }: ResourceCardPr
                 </div>
               )}
             </div>
-            <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+            <Eye className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
           </div>
         </CardContent>
       </Card>
-    </a>
+
+      <ResourcePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title={title}
+        fileUrl={fileUrl}
+      />
+    </>
   );
 }

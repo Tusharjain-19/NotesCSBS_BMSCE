@@ -75,31 +75,62 @@ const Index = () => {
             </p>
 
             {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-32 rounded-lg" />
-                ))}
+              <div className="flex flex-col items-center gap-4 md:gap-6 max-w-4xl mx-auto">
+                <div className="grid grid-cols-3 gap-4 md:gap-6 w-full">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-32 rounded-lg" />
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-4 md:gap-6 w-2/3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i + 3} className="h-32 rounded-lg" />
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
-                {semesters?.map((semester, index) => (
-                  <div
-                    key={semester.id}
-                    className={`transition-all duration-500 ${
-                      semestersAnimation.isVisible 
-                        ? "opacity-100 translate-y-0" 
-                        : "opacity-0 translate-y-8"
-                    }`}
-                    style={{ transitionDelay: `${index * 75}ms` }}
-                  >
-                    <SemesterCard
-                      id={semester.id}
-                      name={semester.name}
-                      order={semester.order}
-                      index={index}
-                    />
-                  </div>
-                ))}
+              <div className="flex flex-col items-center gap-4 md:gap-6 max-w-4xl mx-auto">
+                {/* First row - 3 semesters */}
+                <div className="grid grid-cols-3 gap-4 md:gap-6 w-full">
+                  {semesters?.slice(0, 3).map((semester, index) => (
+                    <div
+                      key={semester.id}
+                      className={`transition-all duration-500 ${
+                        semestersAnimation.isVisible 
+                          ? "opacity-100 translate-y-0" 
+                          : "opacity-0 translate-y-8"
+                      }`}
+                      style={{ transitionDelay: `${index * 75}ms` }}
+                    >
+                      <SemesterCard
+                        id={semester.id}
+                        name={semester.name}
+                        order={semester.order}
+                        index={index}
+                      />
+                    </div>
+                  ))}
+                </div>
+                {/* Second row - 2 semesters centered */}
+                <div className="grid grid-cols-2 gap-4 md:gap-6 w-2/3">
+                  {semesters?.slice(3, 5).map((semester, index) => (
+                    <div
+                      key={semester.id}
+                      className={`transition-all duration-500 ${
+                        semestersAnimation.isVisible 
+                          ? "opacity-100 translate-y-0" 
+                          : "opacity-0 translate-y-8"
+                      }`}
+                      style={{ transitionDelay: `${(index + 3) * 75}ms` }}
+                    >
+                      <SemesterCard
+                        id={semester.id}
+                        name={semester.name}
+                        order={semester.order}
+                        index={index + 3}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

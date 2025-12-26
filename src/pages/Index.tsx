@@ -5,7 +5,7 @@ import { SemesterCard } from "@/components/SemesterCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SpaceBackground } from "@/components/SpaceBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import bmsceLogo from "@/assets/bmsce-logo.png";
+import notesCsbsLogo from "@/assets/notes-csbs-logo.png";
 
 const Index = () => {
   const { data: semesters, isLoading } = useQuery({
@@ -45,14 +45,11 @@ const Index = () => {
           >
             <div className="mb-6 animate-[float_3s_ease-in-out_infinite]">
               <img 
-                src={bmsceLogo} 
-                alt="BMSCE Logo" 
-                className="h-28 w-28 md:h-36 md:w-36 lg:h-44 lg:w-44 object-contain drop-shadow-lg"
+                src={notesCsbsLogo} 
+                alt="notes.csbs Logo" 
+                className="h-40 w-auto md:h-52 lg:h-64 object-contain drop-shadow-lg"
               />
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 tracking-tight">
-              notes<span className="text-primary">.csbs</span>
-            </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-1">
               All CSBS academic resources in one place
             </p>

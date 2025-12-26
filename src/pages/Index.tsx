@@ -25,17 +25,19 @@ const Index = () => {
   const footerAnimation = useScrollAnimation();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-primary/5 via-background to-background">
+      {/* Full Page Hero + Semesters Section */}
+      <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
         <SpaceBackground />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.1),transparent_50%)]" />
-        <div className="container mx-auto px-4 py-16 md:py-24">
+        
+        <div className="container mx-auto px-4 py-12 md:py-16 relative z-10 flex flex-col min-h-[calc(100vh-4rem)]">
+          {/* Hero Content */}
           <div 
             ref={heroAnimation.ref}
-            className={`relative flex flex-col items-center text-center transition-all duration-700 ${
+            className={`flex flex-col items-center text-center mb-12 transition-all duration-700 ${
               heroAnimation.isVisible 
                 ? "opacity-100 translate-y-0" 
                 : "opacity-0 translate-y-8"
@@ -45,68 +47,66 @@ const Index = () => {
               <img 
                 src={bmsceLogo} 
                 alt="BMSCE Logo" 
-                className="h-32 w-32 md:h-44 md:w-44 lg:h-52 lg:w-52 object-contain drop-shadow-lg"
+                className="h-28 w-28 md:h-36 md:w-36 lg:h-44 lg:w-44 object-contain drop-shadow-lg"
               />
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 tracking-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 tracking-tight">
               notes<span className="text-primary">.csbs</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-2">
+            <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-1">
               All CSBS academic resources in one place
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               B.M.S. College of Engineering, Bangalore
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* Semesters Section */}
-      <main className="container mx-auto px-4 py-12">
-        <div 
-          ref={semestersAnimation.ref}
-          className={`mb-8 transition-all duration-700 delay-100 ${
-            semestersAnimation.isVisible 
-              ? "opacity-100 translate-y-0" 
-              : "opacity-0 translate-y-8"
-          }`}
-        >
-          <h2 className="text-2xl font-semibold text-foreground mb-2">
-            Select Your Semester
-          </h2>
-          <p className="text-muted-foreground">
-            Choose a semester to view subjects and resources
-          </p>
-        </div>
+          {/* Semesters Section */}
+          <div 
+            ref={semestersAnimation.ref}
+            className={`flex-1 transition-all duration-700 delay-100 ${
+              semestersAnimation.isVisible 
+                ? "opacity-100 translate-y-0" 
+                : "opacity-0 translate-y-8"
+            }`}
+          >
+            <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-2 text-center">
+              Select Your Semester
+            </h2>
+            <p className="text-muted-foreground text-center mb-8 text-sm">
+              Choose a semester to view subjects and resources
+            </p>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-lg" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {semesters?.map((semester, index) => (
-              <div
-                key={semester.id}
-                className={`transition-all duration-500 ${
-                  semestersAnimation.isVisible 
-                    ? "opacity-100 translate-y-0" 
-                    : "opacity-0 translate-y-8"
-                }`}
-                style={{ transitionDelay: `${index * 75}ms` }}
-              >
-                <SemesterCard
-                  id={semester.id}
-                  name={semester.name}
-                  order={semester.order}
-                  index={index}
-                />
+            {isLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="h-32 rounded-lg" />
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
+                {semesters?.map((semester, index) => (
+                  <div
+                    key={semester.id}
+                    className={`transition-all duration-500 ${
+                      semestersAnimation.isVisible 
+                        ? "opacity-100 translate-y-0" 
+                        : "opacity-0 translate-y-8"
+                    }`}
+                    style={{ transitionDelay: `${index * 75}ms` }}
+                  >
+                    <SemesterCard
+                      id={semester.id}
+                      name={semester.name}
+                      order={semester.order}
+                      index={index}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
 
       {/* Footer */}

@@ -23,6 +23,18 @@ const contributors: Contributor[] = [
     batch: "2028",
     branch: "CSBS",
   },
+  {
+    name: "Niranjan K",
+    linkedIn: "https://www.linkedin.com/in/niranjan-k-140ba9322/",
+    batch: "2028",
+    branch: "CSBS",
+  },
+  {
+    name: "Rishabh Gupta",
+    linkedIn: "https://www.linkedin.com/in/rishabh-gupta-4aa635387/",
+    batch: "2028",
+    branch: "CSBS",
+  },
 ];
 
 export default function Contributors() {

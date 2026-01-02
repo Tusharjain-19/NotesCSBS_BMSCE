@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
+import { AnimatedHeader } from "@/components/AnimatedMenu";
+import { FloatingCard } from "@/components/FloatingCard";
+import { InfiniteCarousel } from "@/components/InfiniteCarousel";
 import { SemesterCard } from "@/components/SemesterCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SpaceBackground } from "@/components/SpaceBackground";
@@ -21,12 +23,13 @@ const Index = () => {
   });
 
   const heroAnimation = useScrollAnimation();
+  const carouselAnimation = useScrollAnimation();
   const semestersAnimation = useScrollAnimation();
   const footerAnimation = useScrollAnimation();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <AnimatedHeader />
       
       {/* Full Page Hero + Semesters Section */}
       <main className="flex-1 relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
@@ -37,19 +40,20 @@ const Index = () => {
           {/* Hero Content */}
           <div 
             ref={heroAnimation.ref}
-            className={`flex flex-col items-center text-center mb-12 transition-all duration-700 ${
+            className={`flex flex-col items-center text-center mb-8 transition-all duration-700 ${
               heroAnimation.isVisible 
                 ? "opacity-100 translate-y-0" 
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <div className="mb-6 animate-[float_3s_ease-in-out_infinite]">
+            <FloatingCard delay={0} className="mb-6">
               <img 
                 src={notesCsbsLogo} 
                 alt="notes.csbs Logo" 
                 className="h-40 w-auto md:h-52 lg:h-64 object-contain drop-shadow-lg"
+                data-magnetic
               />
-            </div>
+            </FloatingCard>
             <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-1">
               All CSBS academic resources in one place
             </p>
@@ -58,10 +62,24 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Semesters Section */}
+          {/* Infinite Carousel Section */}
+          <div 
+            ref={carouselAnimation.ref}
+            className={`mb-12 transition-all duration-700 delay-75 ${
+              carouselAnimation.isVisible 
+                ? "opacity-100 translate-y-0" 
+                : "opacity-0 translate-y-8"
+            }`}
+          >
+            {!isLoading && semesters && semesters.length > 0 && (
+              <InfiniteCarousel items={semesters} speed={40} pauseOnHover />
+            )}
+          </div>
+
+          {/* Semesters Grid Section */}
           <div 
             ref={semestersAnimation.ref}
-            className={`flex-1 transition-all duration-700 delay-100 ${
+            className={`flex-1 transition-all duration-700 delay-150 ${
               semestersAnimation.isVisible 
                 ? "opacity-100 translate-y-0" 
                 : "opacity-0 translate-y-8"
@@ -92,14 +110,14 @@ const Index = () => {
                 {/* First row - 3 semesters */}
                 <div className="grid grid-cols-3 gap-4 md:gap-6 w-full">
                   {semesters?.slice(0, 3).map((semester, index) => (
-                    <div
+                    <FloatingCard
                       key={semester.id}
+                      delay={index}
                       className={`transition-all duration-500 ${
                         semestersAnimation.isVisible 
                           ? "opacity-100 translate-y-0" 
                           : "opacity-0 translate-y-8"
                       }`}
-                      style={{ transitionDelay: `${index * 75}ms` }}
                     >
                       <SemesterCard
                         id={semester.id}
@@ -107,20 +125,20 @@ const Index = () => {
                         order={semester.order}
                         index={index}
                       />
-                    </div>
+                    </FloatingCard>
                   ))}
                 </div>
                 {/* Second row - 3 semesters */}
                 <div className="grid grid-cols-3 gap-4 md:gap-6 w-full">
                   {semesters?.slice(3, 6).map((semester, index) => (
-                    <div
+                    <FloatingCard
                       key={semester.id}
+                      delay={index + 3}
                       className={`transition-all duration-500 ${
                         semestersAnimation.isVisible 
                           ? "opacity-100 translate-y-0" 
                           : "opacity-0 translate-y-8"
                       }`}
-                      style={{ transitionDelay: `${(index + 3) * 75}ms` }}
                     >
                       <SemesterCard
                         id={semester.id}
@@ -128,7 +146,7 @@ const Index = () => {
                         order={semester.order}
                         index={index + 3}
                       />
-                    </div>
+                    </FloatingCard>
                   ))}
                 </div>
               </div>
@@ -155,13 +173,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-      `}</style>
     </div>
   );
 };

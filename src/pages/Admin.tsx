@@ -16,6 +16,29 @@ import { User, Session } from "@supabase/supabase-js";
 
 type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see" | "book";
 
+// File validation constants
+const ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'mp4', 'c', 'cpp', 'py', 'java', 'js', 'ts', 'h'];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-powerpoint',
+  'application/msword',
+  'text/plain',
+  'image/jpeg',
+  'image/png',
+  'video/mp4',
+  'text/x-c',
+  'text/x-c++src',
+  'text/x-python',
+  'text/x-java',
+  'text/javascript',
+  'application/typescript',
+  'text/x-csrc',
+  'text/x-c++',
+];
+
 interface Subject {
   id: number;
   name: string;
@@ -164,9 +187,37 @@ const Admin = () => {
     enabled: !!selectedSubject,
   });
 
+  // Validate file before upload
+  const validateFile = (file: File): string | null => {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return `File "${file.name}" exceeds 50MB limit`;
+    }
+    
+    // Validate file extension
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+      return `File "${file.name}" has invalid extension. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`;
+    }
+    
+    // Validate MIME type (relaxed check for code files)
+    const isCodeFile = ['c', 'cpp', 'py', 'java', 'js', 'ts', 'h'].includes(fileExt);
+    if (!isCodeFile && file.type && !ALLOWED_MIME_TYPES.some(type => file.type.startsWith(type.split('/')[0]))) {
+      return `File "${file.name}" has invalid file type`;
+    }
+    
+    return null;
+  };
+
   // Upload file to storage
   const uploadFile = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
+    // Validate before upload
+    const validationError = validateFile(file);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${selectedSubject}/${fileName}`;
     
@@ -308,9 +359,31 @@ const Admin = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setSelectedFiles(Array.from(files));
+      const fileArray = Array.from(files);
+      const invalidFiles: string[] = [];
+      const validFiles: File[] = [];
+      
+      for (const file of fileArray) {
+        const error = validateFile(file);
+        if (error) {
+          invalidFiles.push(error);
+        } else {
+          validFiles.push(file);
+        }
+      }
+      
+      if (invalidFiles.length > 0) {
+        toast({
+          title: "Invalid Files",
+          description: invalidFiles.join('\n'),
+          variant: "destructive",
+        });
+      }
+      
+      setSelectedFiles(validFiles);
     }
   };
+
 
   const removeFile = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));

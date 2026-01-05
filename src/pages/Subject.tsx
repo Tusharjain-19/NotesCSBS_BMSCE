@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ResourceCard } from "@/components/ResourceCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -133,10 +134,10 @@ const Subject = () => {
   const hasUnits = units && units.length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <Breadcrumb 
           items={[
             { 
@@ -400,6 +401,7 @@ const Subject = () => {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 };

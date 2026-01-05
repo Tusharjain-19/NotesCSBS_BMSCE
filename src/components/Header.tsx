@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
-import { Users } from "lucide-react";
+import { Users, Mail } from "lucide-react";
 import bmsceLogo from "@/assets/bmsce-logo.png";
+import { Button } from "./ui/button";
 
 export function Header() {
   return (
@@ -15,6 +16,17 @@ export function Header() {
           </div>
         </Link>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <a href="mailto:notescsbsbmsce@gmail.com">
+              <Mail className="h-4 w-4" />
+              <span className="hidden sm:inline">Feedback</span>
+            </a>
+          </Button>
           <Link
             to="/contributors"
             className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"

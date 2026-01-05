@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const Auth = () => {
@@ -92,10 +93,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <main className="container mx-auto px-4 py-16 flex items-center justify-center">
+      <main className="container mx-auto px-4 py-16 flex items-center justify-center flex-1">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">
@@ -175,6 +176,7 @@ const Auth = () => {
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };

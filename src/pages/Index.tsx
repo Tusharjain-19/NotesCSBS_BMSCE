@@ -7,6 +7,7 @@ import { SemesterCard } from "@/components/SemesterCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SpaceBackground } from "@/components/SpaceBackground";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { Footer } from "@/components/Footer";
 import notesCsbsLogo from "@/assets/notes-csbs-logo.png";
 
 const Index = () => {
@@ -173,6 +174,7 @@ const Index = () => {
           </p>
         </div>
       </footer>
+      <Footer />
     </div>
   );
 };

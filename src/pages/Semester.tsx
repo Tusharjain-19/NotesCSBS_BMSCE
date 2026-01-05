@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { SubjectCard } from "@/components/SubjectCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { Footer } from "@/components/Footer";
 
 const Semester = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,10 +42,10 @@ const Semester = () => {
   const isLoading = semesterLoading || subjectsLoading;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <Breadcrumb 
           items={[
             { label: semester?.name || "Loading..." }
@@ -121,6 +122,7 @@ const Semester = () => {
           />
         )}
       </main>
+      <Footer />
     </div>
   );
 };

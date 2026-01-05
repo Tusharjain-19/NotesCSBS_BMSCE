@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Card, CardContent } from "@/components/ui/card";
 import { Linkedin } from "lucide-react";
@@ -76,9 +77,9 @@ const ContributorCard = ({ contributor }: { contributor: Contributor }) => (
 
 export default function Contributors() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <Breadcrumb
           items={[
             { label: "Home", href: "/" },
@@ -119,6 +120,7 @@ export default function Contributors() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

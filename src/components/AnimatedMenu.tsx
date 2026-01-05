@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
-import { Users, Menu, X, Home, Shield } from "lucide-react";
+import { Users, Menu, X, Home, Shield, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import bmsceLogo from "@/assets/bmsce-logo.png";
 
@@ -82,6 +82,14 @@ export function AnimatedHeader() {
               <span>{item.label}</span>
             </Link>
           ))}
+          <a
+            href="mailto:notescsbsbmsce@gmail.com"
+            data-magnetic
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-accent"
+          >
+            <Mail className="h-4 w-4" />
+            <span>Feedback</span>
+          </a>
           <div className="ml-2" data-magnetic>
             <ThemeToggle />
           </div>
@@ -131,6 +139,16 @@ export function AnimatedHeader() {
               <span>{item.label}</span>
             </Link>
           ))}
+          <a
+            href="mailto:notescsbsbmsce@gmail.com"
+            className={`flex items-center gap-3 px-4 py-4 text-lg rounded-xl transition-all duration-300 mb-2 text-muted-foreground hover:text-foreground hover:bg-accent ${isMenuOpen ? 'menu-item-visible' : 'menu-item-hidden'}`}
+            style={{ 
+              transitionDelay: isMenuOpen ? `${menuItems.length * 75}ms` : '0ms',
+            }}
+          >
+            <Mail className="h-4 w-4" />
+            <span>Feedback</span>
+          </a>
         </nav>
       </div>
 

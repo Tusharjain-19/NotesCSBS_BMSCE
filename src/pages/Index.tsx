@@ -49,7 +49,7 @@ const Index = () => {
             <FloatingCard delay={0} className="mb-6">
               <img 
                 src={notesCsbsLogo} 
-                alt="notes.csbs Logo" 
+                alt="Notes CSBS Logo" 
                 className="h-40 w-auto md:h-52 lg:h-64 object-contain drop-shadow-lg"
                 data-magnetic
               />

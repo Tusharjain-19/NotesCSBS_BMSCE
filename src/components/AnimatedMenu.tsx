@@ -56,7 +56,7 @@ export function AnimatedHeader() {
             }`}
           />
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground">notes.csbs</span>
+            <span className="font-semibold text-foreground">Notes CSBS</span>
             <span className="text-xs text-muted-foreground hidden sm:block">BMSCE Resources</span>
           </div>
         </Link>

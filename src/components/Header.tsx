@@ -10,7 +10,7 @@ export function Header() {
         <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
           <img src={bmsceLogo} alt="BMSCE Logo" className="h-12 w-12 md:h-14 md:w-14 object-contain" />
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground">notes.csbs</span>
+            <span className="font-semibold text-foreground">Notes CSBS</span>
             <span className="text-xs text-muted-foreground">BMSCE Resources</span>
           </div>
         </Link>

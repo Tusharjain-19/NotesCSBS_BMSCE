@@ -64,14 +64,14 @@ export function InfiniteCarousel({ items, speed = 30, pauseOnHover = true }: Inf
                 data-magnetic
                 className="shrink-0"
               >
-                <Card className="group w-52 border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
-                  <CardContent className="flex items-center gap-4 p-5">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20">
-                      <Icon className="h-6 w-6" />
+                <Card className="group w-40 sm:w-52 border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <CardContent className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5">
+                    <div className="flex h-9 w-9 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20">
+                      <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground text-sm">{semester.name}</h3>
-                      <p className="text-xs text-muted-foreground">View subjects</p>
+                      <h3 className="font-semibold text-foreground text-xs sm:text-sm">{semester.name}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">View subjects</p>
                     </div>
                   </CardContent>
                 </Card>

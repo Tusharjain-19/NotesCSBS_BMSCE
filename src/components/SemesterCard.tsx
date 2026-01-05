@@ -17,17 +17,17 @@ export function SemesterCard({ id, name, order, index }: SemesterCardProps) {
   return (
     <Link to={`/semester/${id}`}>
       <Card 
-        className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
+        className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg h-full"
         style={{ animationDelay: `${index * 100}ms` }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        <CardContent className="relative flex flex-col items-center gap-4 p-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20">
-            <Icon className="h-7 w-7" />
+        <CardContent className="relative flex flex-col items-center gap-2 sm:gap-4 p-4 sm:p-6">
+          <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20">
+            <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
           </div>
           <div className="text-center">
-            <h3 className="font-semibold text-foreground">{name}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">{name}</h3>
+            <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground hidden sm:block">
               View all subjects
             </p>
           </div>

@@ -359,19 +359,49 @@ const Admin = () => {
       const uploadedResources: { title: string; fileUrl: string }[] = [];
       const totalFiles = selectedFiles.length;
       
+      // Get file extension label for generic naming
+      const getFileTypeLabel = (fileName: string): string => {
+        const ext = fileName.split('.').pop()?.toLowerCase() || '';
+        const extLabels: Record<string, string> = {
+          'pdf': 'PDF',
+          'doc': 'Document',
+          'docx': 'Document',
+          'ppt': 'Presentation',
+          'pptx': 'Presentation',
+          'txt': 'Text',
+          'jpg': 'Image',
+          'jpeg': 'Image',
+          'png': 'Image',
+          'mp4': 'Video',
+          'c': 'Code',
+          'cpp': 'Code',
+          'py': 'Code',
+          'java': 'Code',
+          'js': 'Code',
+          'ts': 'Code',
+          'h': 'Code',
+        };
+        return extLabels[ext] || 'File';
+      };
+      
+      let successCount = 0;
+      
       for (let i = 0; i < totalFiles; i++) {
         const file = selectedFiles[i];
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        setUploadProgress(`Uploading ${i + 1}/${totalFiles}: ${file.name} (${fileSizeMB}MB)`);
+        setUploadProgress(`Uploading ${i + 1}/${totalFiles}: (${fileSizeMB}MB)`);
         
         try {
           const url = await uploadFile(file);
-          const fileTitle = file.name.replace(/\.[^/.]+$/, "");
-          uploadedResources.push({ title: fileTitle, fileUrl: url });
+          successCount++;
+          // Use generic name like "PDF 1", "PDF 2" instead of actual file name
+          const fileTypeLabel = getFileTypeLabel(file.name);
+          const genericTitle = totalFiles === 1 ? fileTypeLabel : `${fileTypeLabel} ${successCount}`;
+          uploadedResources.push({ title: genericTitle, fileUrl: url });
         } catch (fileError: any) {
           // If one file fails, show error but continue with others
           toast({
-            title: `Failed: ${file.name}`,
+            title: `Failed: File ${i + 1}`,
             description: fileError.message,
             variant: "destructive",
           });

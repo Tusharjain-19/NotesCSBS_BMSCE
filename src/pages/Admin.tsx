@@ -209,7 +209,7 @@ const Admin = () => {
     return null;
   };
 
-  // Upload file to storage
+  // Upload file to storage with timeout
   const uploadFile = async (file: File): Promise<string> => {
     // Validate before upload
     const validationError = validateFile(file);
@@ -221,11 +221,35 @@ const Admin = () => {
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${selectedSubject}/${fileName}`;
     
-    const { data, error } = await supabase.storage
-      .from('resources')
-      .upload(filePath, file);
+    // Create a timeout promise (2 minutes for large files)
+    const UPLOAD_TIMEOUT = 120000; // 2 minutes
     
-    if (error) throw error;
+    const uploadPromise = supabase.storage
+      .from('resources')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+    
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Upload timed out after ${UPLOAD_TIMEOUT / 1000} seconds. Try a smaller file or check your internet connection.`));
+      }, UPLOAD_TIMEOUT);
+    });
+    
+    // Race between upload and timeout
+    const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+    
+    if (error) {
+      // Provide more helpful error messages
+      if (error.message?.includes('duplicate')) {
+        throw new Error('A file with this name already exists. Please rename the file.');
+      }
+      if (error.message?.includes('policy')) {
+        throw new Error('Permission denied. Please ensure you are logged in as admin.');
+      }
+      throw new Error(`Upload failed: ${error.message}`);
+    }
     
     const { data: urlData } = supabase.storage
       .from('resources')
@@ -333,17 +357,38 @@ const Admin = () => {
     try {
       setIsUploading(true);
       const uploadedResources: { title: string; fileUrl: string }[] = [];
+      const totalFiles = selectedFiles.length;
       
-      for (let i = 0; i < selectedFiles.length; i++) {
+      for (let i = 0; i < totalFiles; i++) {
         const file = selectedFiles[i];
-        setUploadProgress(`Uploading ${i + 1}/${selectedFiles.length}: ${file.name}`);
-        const url = await uploadFile(file);
-        const fileTitle = file.name.replace(/\.[^/.]+$/, "");
-        uploadedResources.push({ title: fileTitle, fileUrl: url });
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        setUploadProgress(`Uploading ${i + 1}/${totalFiles}: ${file.name} (${fileSizeMB}MB)`);
+        
+        try {
+          const url = await uploadFile(file);
+          const fileTitle = file.name.replace(/\.[^/.]+$/, "");
+          uploadedResources.push({ title: fileTitle, fileUrl: url });
+        } catch (fileError: any) {
+          // If one file fails, show error but continue with others
+          toast({
+            title: `Failed: ${file.name}`,
+            description: fileError.message,
+            variant: "destructive",
+          });
+        }
       }
       
       setUploadProgress("");
-      addResourceMutation.mutate(uploadedResources);
+      
+      if (uploadedResources.length > 0) {
+        addResourceMutation.mutate(uploadedResources);
+      } else if (totalFiles > 0) {
+        toast({
+          title: "Upload Failed",
+          description: "No files were uploaded successfully. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Upload Error",

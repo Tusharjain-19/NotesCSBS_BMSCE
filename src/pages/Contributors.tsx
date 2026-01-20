@@ -8,57 +8,41 @@ interface Contributor {
   name: string;
   linkedIn: string;
   batch: string;
-  branch: string;
-  role?: string;
 }
 
-const techContributors: Contributor[] = [
+const contributors: Contributor[] = [
   {
     name: "Tushar Jain",
     linkedIn: "https://www.linkedin.com/in/tushar-jain-781149322/",
     batch: "2028",
-    branch: "CSBS",
-    role: "Tech Lead",
   },
   {
     name: "Ayush Kumar",
     linkedIn: "https://www.linkedin.com/in/ayush-kumar-b903b7285/",
     batch: "2028",
-    branch: "CSBS",
-    role: "Database Management",
   },
-];
-
-const resourceContributors: Contributor[] = [
   {
     name: "Niranjan K",
     linkedIn: "https://www.linkedin.com/in/niranjan-k-140ba9322/",
     batch: "2028",
-    branch: "CSBS",
   },
   {
     name: "Rishabh Gupta",
     linkedIn: "https://www.linkedin.com/in/rishabh-gupta-4aa635387/",
     batch: "2028",
-    branch: "CSBS",
   },
 ];
 
 const ContributorCard = ({ contributor }: { contributor: Contributor }) => (
   <Card className="group hover:shadow-lg transition-shadow">
     <CardContent className="p-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-lg text-foreground">
             {contributor.name}
           </h3>
-          {contributor.role && (
-            <p className="text-sm text-primary font-medium">
-              {contributor.role}
-            </p>
-          )}
           <p className="text-sm text-muted-foreground mt-1">
-            Batch of {contributor.batch} • {contributor.branch}
+            Batch of {contributor.batch}
           </p>
         </div>
         <a
@@ -93,30 +77,10 @@ export default function Contributors() {
             Meet the amazing people who contributed to this project.
           </p>
 
-          {/* Tech Section */}
-          <div className="mb-10">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary"></span>
-              Tech Team
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {techContributors.map((contributor) => (
-                <ContributorCard key={contributor.name} contributor={contributor} />
-              ))}
-            </div>
-          </div>
-
-          {/* Resource Contributors Section */}
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary"></span>
-              Resource Contributors
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {resourceContributors.map((contributor) => (
-                <ContributorCard key={contributor.name} contributor={contributor} />
-              ))}
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {contributors.map((contributor) => (
+              <ContributorCard key={contributor.name} contributor={contributor} />
+            ))}
           </div>
         </div>
       </main>

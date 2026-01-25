@@ -142,7 +142,7 @@ const Admin = () => {
   });
 
   // Fetch subjects for selected semester
-  const { data: subjects } = useQuery({
+  const { data: subjects, isLoading: isLoadingSubjects } = useQuery({
     queryKey: ["subjects", selectedSemester],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -316,8 +316,21 @@ const Admin = () => {
   });
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to sign out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      navigate("/");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      navigate("/");
+    }
   };
 
   const handleAddResource = async (e: React.FormEvent) => {
@@ -570,18 +583,27 @@ const Admin = () => {
                       setSelectedSubject(v);
                       setSelectedUnit("");
                     }}
-                    disabled={!selectedSemester}
+                    disabled={!selectedSemester || isLoadingSubjects}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select subject" />
+                      <SelectValue placeholder={isLoadingSubjects ? "Loading subjects..." : "Select subject"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjects?.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id.toString()}>
-                          {sub.code} - {sub.name}
-                        </SelectItem>
-                      ))
-                      }
+                      {isLoadingSubjects ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : subjects && subjects.length > 0 ? (
+                        subjects.map((sub) => (
+                          <SelectItem key={sub.id} value={sub.id.toString()}>
+                            {sub.code} - {sub.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="py-2 px-2 text-sm text-muted-foreground">
+                          No subjects found
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

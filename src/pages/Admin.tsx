@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, LogOut, BookOpen, FileText, GraduationCap, Upload, Link, Library } from "lucide-react";
+import { Loader2, Plus, Trash2, LogOut, BookOpen, FileText, GraduationCap, Upload, Link, Library, BarChart3 } from "lucide-react";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { User, Session } from "@supabase/supabase-js";
 
 type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see" | "book";
@@ -530,7 +531,7 @@ const Admin = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground">Manage resources and study materials</p>
+            <p className="text-muted-foreground">Manage resources and view analytics</p>
           </div>
           <Button variant="outline" onClick={handleSignOut}>
             <LogOut className="h-4 w-4 mr-2" />
@@ -538,311 +539,330 @@ const Admin = () => {
           </Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Add Resource Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Add Resource
-              </CardTitle>
-              <CardDescription>
-                Add a new study material with Google Drive link
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddResource} className="space-y-4">
-                {/* Semester Selection */}
-                <div className="space-y-2">
-                  <Label>Semester</Label>
-                  <Select value={selectedSemester} onValueChange={(v) => {
-                    setSelectedSemester(v);
-                    setSelectedSubject("");
-                    setSelectedUnit("");
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select semester" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {semesters?.map((sem) => (
-                        <SelectItem key={sem.id} value={sem.id.toString()}>
-                          {sem.name}
-                        </SelectItem>
-                      ))
-                      }
-                    </SelectContent>
-                  </Select>
-                </div>
+        <Tabs defaultValue="resources" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="resources" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Resources
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
-                {/* Subject Selection */}
-                <div className="space-y-2">
-                  <Label>Subject</Label>
-                  <Select 
-                    value={selectedSubject} 
-                    onValueChange={(v) => {
-                      setSelectedSubject(v);
-                      setSelectedUnit("");
-                    }}
-                    disabled={!selectedSemester || isLoadingSubjects}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={isLoadingSubjects ? "Loading subjects..." : "Select subject"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {isLoadingSubjects ? (
-                        <div className="flex items-center justify-center py-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : subjects && subjects.length > 0 ? (
-                        subjects.map((sub) => (
-                          <SelectItem key={sub.id} value={sub.id.toString()}>
-                            {sub.code} - {sub.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="py-2 px-2 text-sm text-muted-foreground">
-                          No subjects found
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+          <TabsContent value="resources">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Add Resource Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Add Resource
+                  </CardTitle>
+                  <CardDescription>
+                    Add a new study material with Google Drive link
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleAddResource} className="space-y-4">
+                    {/* Semester Selection */}
+                    <div className="space-y-2">
+                      <Label>Semester</Label>
+                      <Select value={selectedSemester} onValueChange={(v) => {
+                        setSelectedSemester(v);
+                        setSelectedSubject("");
+                        setSelectedUnit("");
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {semesters?.map((sem) => (
+                            <SelectItem key={sem.id} value={sem.id.toString()}>
+                              {sem.name}
+                            </SelectItem>
+                          ))
+                          }
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Resource Type</Label>
-                  <Tabs value={resourceType} onValueChange={(v) => setResourceType(v as ResourceType)}>
-                    <TabsList className="grid w-full grid-cols-6">
-                      <TabsTrigger value="notes">Notes</TabsTrigger>
-                      <TabsTrigger value="cie1">CIE-1</TabsTrigger>
-                      <TabsTrigger value="cie2">CIE-2</TabsTrigger>
-                      <TabsTrigger value="cie3">CIE-3</TabsTrigger>
-                      <TabsTrigger value="see">SEE</TabsTrigger>
-                      <TabsTrigger value="book">Book</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
+                    {/* Subject Selection */}
+                    <div className="space-y-2">
+                      <Label>Subject</Label>
+                      <Select 
+                        value={selectedSubject} 
+                        onValueChange={(v) => {
+                          setSelectedSubject(v);
+                          setSelectedUnit("");
+                        }}
+                        disabled={!selectedSemester || isLoadingSubjects}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoadingSubjects ? "Loading subjects..." : "Select subject"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {isLoadingSubjects ? (
+                            <div className="flex items-center justify-center py-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            </div>
+                          ) : subjects && subjects.length > 0 ? (
+                            subjects.map((sub) => (
+                              <SelectItem key={sub.id} value={sub.id.toString()}>
+                                {sub.code} - {sub.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="py-2 px-2 text-sm text-muted-foreground">
+                              No subjects found
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {/* Unit Selection (only for notes) */}
-                {resourceType === "notes" && units && units.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Unit (Optional for books/question banks)</Label>
-                    <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select unit (or leave empty for books)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Unit (Books/QB)</SelectItem>
-                        {units?.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.unit_number.toString()}>
-                            Unit {unit.unit_number}: {unit.unit_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                    <div className="space-y-2">
+                      <Label>Resource Type</Label>
+                      <Tabs value={resourceType} onValueChange={(v) => setResourceType(v as ResourceType)}>
+                        <TabsList className="grid w-full grid-cols-6">
+                          <TabsTrigger value="notes">Notes</TabsTrigger>
+                          <TabsTrigger value="cie1">CIE-1</TabsTrigger>
+                          <TabsTrigger value="cie2">CIE-2</TabsTrigger>
+                          <TabsTrigger value="cie3">CIE-3</TabsTrigger>
+                          <TabsTrigger value="see">SEE</TabsTrigger>
+                          <TabsTrigger value="book">Book</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
 
-                {/* Title - Only shown for link mode */}
-                {uploadMode === "link" && (
-                  <div className="space-y-2">
-                    <Label>Title *</Label>
-                    <Input
-                      placeholder="e.g., Unit 1 Notes - Introduction"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
+                    {/* Unit Selection (only for notes) */}
+                    {resourceType === "notes" && units && units.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Unit (Optional for books/question banks)</Label>
+                        <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select unit (or leave empty for books)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No Unit (Books/QB)</SelectItem>
+                            {units?.map((unit) => (
+                              <SelectItem key={unit.id} value={unit.unit_number.toString()}>
+                                Unit {unit.unit_number}: {unit.unit_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
-                {/* Upload Mode Toggle */}
-                <div className="space-y-2">
-                  <Label>File Source</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={uploadMode === "link" ? "default" : "outline"}
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setUploadMode("link")}
-                    >
-                      <Link className="h-4 w-4 mr-2" />
-                      Google Drive Link
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={uploadMode === "file" ? "default" : "outline"}
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setUploadMode("file")}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload File
-                    </Button>
-                  </div>
-                </div>
+                    {/* Title - Only shown for link mode */}
+                    {uploadMode === "link" && (
+                      <div className="space-y-2">
+                        <Label>Title *</Label>
+                        <Input
+                          placeholder="e.g., Unit 1 Notes - Introduction"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
 
-                {/* Google Drive URL */}
-                {uploadMode === "link" && (
-                  <div className="space-y-2">
-                    <Label>Google Drive Link *</Label>
-                    <Input
-                      placeholder="https://drive.google.com/file/d/..."
-                      value={fileUrl}
-                      onChange={(e) => setFileUrl(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Make sure the file has "Anyone with the link can view" access
-                    </p>
-                  </div>
-                )}
+                    {/* Upload Mode Toggle */}
+                    <div className="space-y-2">
+                      <Label>File Source</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={uploadMode === "link" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setUploadMode("link")}
+                        >
+                          <Link className="h-4 w-4 mr-2" />
+                          Google Drive Link
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={uploadMode === "file" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setUploadMode("file")}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload File
+                        </Button>
+                      </div>
+                    </div>
 
-                {/* File Upload */}
-                {uploadMode === "file" && (
-                  <div className="space-y-2">
-                    <Label>Select Files *</Label>
-                    <Input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.c,.cpp,.py,.java,.js,.ts,.h"
-                      onChange={handleFileChange}
-                      className="cursor-pointer"
-                    />
-                    {selectedFiles.length > 0 && (
-                      <div className="space-y-1 mt-2">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {selectedFiles.length} file(s) selected:
+                    {/* Google Drive URL */}
+                    {uploadMode === "link" && (
+                      <div className="space-y-2">
+                        <Label>Google Drive Link *</Label>
+                        <Input
+                          placeholder="https://drive.google.com/file/d/..."
+                          value={fileUrl}
+                          onChange={(e) => setFileUrl(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Make sure the file has "Anyone with the link can view" access
                         </p>
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between text-xs bg-muted/50 rounded px-2 py-1">
-                            <span className="truncate flex-1 mr-2">{file.name}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-muted-foreground">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                              </span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5 text-destructive hover:text-destructive"
-                                onClick={() => removeFile(index)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                      </div>
+                    )}
+
+                    {/* File Upload */}
+                    {uploadMode === "file" && (
+                      <div className="space-y-2">
+                        <Label>Select Files *</Label>
+                        <Input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.c,.cpp,.py,.java,.js,.ts,.h"
+                          onChange={handleFileChange}
+                          className="cursor-pointer"
+                        />
+                        {selectedFiles.length > 0 && (
+                          <div className="space-y-1 mt-2">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              {selectedFiles.length} file(s) selected:
+                            </p>
+                            {selectedFiles.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between text-xs bg-muted/50 rounded px-2 py-1">
+                                <span className="truncate flex-1 mr-2">{file.name}</span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-muted-foreground">
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5 text-destructive hover:text-destructive"
+                                    onClick={() => removeFile(index)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {uploadProgress && (
+                          <p className="text-xs text-primary font-medium">{uploadProgress}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Year (optional) */}
+                    <div className="space-y-2">
+                      <Label>Year (Optional)</Label>
+                      <Input
+                        type="number"
+                        placeholder="2024"
+                        value={year}
+                        onChange={(e) => setYear(e.target.value)}
+                        min="2020"
+                        max="2030"
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={addResourceMutation.isPending || isUploading}
+                    >
+                      {(addResourceMutation.isPending || isUploading) ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {isUploading ? "Uploading..." : "Adding..."}
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          {uploadMode === "file" && selectedFiles.length > 1 
+                            ? `Add ${selectedFiles.length} Resources` 
+                            : "Add Resource"}
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Existing Resources */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Existing Resources</CardTitle>
+                  <CardDescription>
+                    {selectedSubject 
+                      ? `${resources?.length || 0} resources for selected subject`
+                      : "Select a subject to view resources"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!selectedSubject ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      Select a semester and subject to view resources
+                    </p>
+                  ) : resources?.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No resources yet. Add your first one!
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                      {resources?.map((resource) => (
+                        <div
+                          key={resource.id}
+                          className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {getTypeIcon(resource.type)}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {resource.title}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  {getTypeLabel(resource.type)}
+                                </Badge>
+                                {resource.unit && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {resource.unit}
+                                  </Badge>
+                                )}
+                                {resource.year && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {resource.year}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    {uploadProgress && (
-                      <p className="text-xs text-primary font-medium">{uploadProgress}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Year (optional) */}
-                <div className="space-y-2">
-                  <Label>Year (Optional)</Label>
-                  <Input
-                    type="number"
-                    placeholder="2024"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    min="2020"
-                    max="2030"
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={addResourceMutation.isPending || isUploading}
-                >
-                  {(addResourceMutation.isPending || isUploading) ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isUploading ? "Uploading..." : "Adding..."}
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      {uploadMode === "file" && selectedFiles.length > 1 
-                        ? `Add ${selectedFiles.length} Resources` 
-                        : "Add Resource"}
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Existing Resources */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Existing Resources</CardTitle>
-              <CardDescription>
-                {selectedSubject 
-                  ? `${resources?.length || 0} resources for selected subject`
-                  : "Select a subject to view resources"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!selectedSubject ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Select a semester and subject to view resources
-                </p>
-              ) : resources?.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No resources yet. Add your first one!
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                  {resources?.map((resource) => (
-                    <div
-                      key={resource.id}
-                      className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {getTypeIcon(resource.type)}
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {resource.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="secondary" className="text-xs">
-                              {getTypeLabel(resource.type)}
-                            </Badge>
-                            {resource.unit && (
-                              <Badge variant="outline" className="text-xs">
-                                {resource.unit}
-                              </Badge>
-                            )}
-                            {resource.year && (
-                              <span className="text-xs text-muted-foreground">
-                                {resource.year}
-                              </span>
-                            )}
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => deleteResourceMutation.mutate(resource.id)}
+                            disabled={deleteResourceMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => deleteResourceMutation.mutate(resource.id)}
-                        disabled={deleteResourceMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      ))
+                      }
                     </div>
-                  ))
-                  }
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

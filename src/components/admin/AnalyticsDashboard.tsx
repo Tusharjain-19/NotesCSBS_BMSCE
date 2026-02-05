@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
 import { format, subDays } from "date-fns";
-import { Users, Eye, Clock, TrendingDown, RefreshCw } from "lucide-react";
+import { Users, Eye, Clock, TrendingDown, RefreshCw, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnalyticsMetricCard } from "./AnalyticsMetricCard";
 import { AnalyticsDateFilter } from "./AnalyticsDateFilter";
 import { AnalyticsChart } from "./AnalyticsChart";
+import { AnalyticsSourceChart } from "./AnalyticsSourceChart";
+import { AnalyticsDeviceChart } from "./AnalyticsDeviceChart";
+import { AnalyticsPageTable } from "./AnalyticsPageTable";
 
 interface AnalyticsData {
   visitors: number;
   pageviews: number;
   avg_duration_seconds: number;
   bounce_rate: number;
+  current_visitors: number;
   top_pages: { path: string; views: number }[];
   timeseries: { date: string; visitors: number; pageviews: number }[];
+  sources: { source: string; visitors: number }[];
+  devices: { device: string; visitors: number; percentage: number }[];
 }
 
 function formatDuration(seconds: number): string {
@@ -31,6 +37,7 @@ const STATIC_ANALYTICS: AnalyticsData = {
   pageviews: 1071,
   avg_duration_seconds: 229,
   bounce_rate: 22,
+  current_visitors: 3,
   top_pages: [
     { path: "/semester/3", views: 217 },
     { path: "/", views: 164 },
@@ -52,6 +59,18 @@ const STATIC_ANALYTICS: AnalyticsData = {
     { date: "2026-01-27", visitors: 62, pageviews: 198 },
     { date: "2026-01-28", visitors: 33, pageviews: 143 },
     { date: "2026-01-29", visitors: 43, pageviews: 151 },
+  ],
+  sources: [
+    { source: "Direct", visitors: 145 },
+    { source: "Google", visitors: 89 },
+    { source: "WhatsApp", visitors: 42 },
+    { source: "Instagram", visitors: 18 },
+    { source: "Other", visitors: 12 },
+  ],
+  devices: [
+    { device: "Mobile", visitors: 198, percentage: 65 },
+    { device: "Desktop", visitors: 92, percentage: 30 },
+    { device: "Tablet", visitors: 16, percentage: 5 },
   ],
 };
 
@@ -89,6 +108,9 @@ export function AnalyticsDashboard() {
       visitors: filteredVisitors || STATIC_ANALYTICS.visitors,
       pageviews: filteredPageviews || STATIC_ANALYTICS.pageviews,
       timeseries: filteredTimeseries.length > 0 ? filteredTimeseries : STATIC_ANALYTICS.timeseries,
+        current_visitors: STATIC_ANALYTICS.current_visitors,
+        sources: STATIC_ANALYTICS.sources,
+        devices: STATIC_ANALYTICS.devices,
     });
     
     setIsLoading(false);
@@ -139,7 +161,14 @@ export function AnalyticsDashboard() {
       </Card>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <AnalyticsMetricCard
+          title="Current Visitors"
+          value={isLoading ? "-" : data?.current_visitors?.toLocaleString() || "0"}
+          icon={Activity}
+          isLoading={isLoading}
+          description="Online now"
+        />
         <AnalyticsMetricCard
           title="Total Visitors"
           value={isLoading ? "-" : data?.visitors?.toLocaleString() || "0"}
@@ -172,41 +201,23 @@ export function AnalyticsDashboard() {
         isLoading={isLoading}
       />
 
-      {/* Top Pages */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Pages</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : !data?.top_pages || data.top_pages.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">
-              No page data available for the selected period
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {data.top_pages.slice(0, 10).map((page, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
-                >
-                  <span className="font-mono text-sm truncate flex-1 mr-4">
-                    {page.path}
-                  </span>
-                  <span className="text-sm font-medium text-muted-foreground shrink-0">
-                    {page.views.toLocaleString()} views
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Sources and Devices */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <AnalyticsSourceChart
+          data={data?.sources || []}
+          isLoading={isLoading}
+        />
+        <AnalyticsDeviceChart
+          data={data?.devices || []}
+          isLoading={isLoading}
+        />
+      </div>
+
+      {/* Top Pages with enhanced data */}
+      <AnalyticsPageTable
+        data={data?.top_pages || []}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

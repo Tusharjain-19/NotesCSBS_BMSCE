@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export type DatePreset = "24h" | "7d" | "30d" | "all" | "custom";
+export type DatePreset = "24h" | "7d" | "30d" | "60d" | "90d" | "all" | "custom";
 
 interface DateRange {
   from: Date;
@@ -47,6 +47,12 @@ export function AnalyticsDateFilter({ onDateChange }: AnalyticsDateFilterProps) 
         break;
       case "30d":
         startDate = subDays(now, 30);
+        break;
+      case "60d":
+        startDate = subDays(now, 60);
+        break;
+      case "90d":
+        startDate = subDays(now, 90);
         break;
       case "all":
         startDate = new Date("2020-01-01");
@@ -85,6 +91,8 @@ export function AnalyticsDateFilter({ onDateChange }: AnalyticsDateFilterProps) 
     { value: "24h", label: "24 Hours" },
     { value: "7d", label: "7 Days" },
     { value: "30d", label: "30 Days" },
+    { value: "60d", label: "60 Days" },
+    { value: "90d", label: "90 Days" },
     { value: "all", label: "All Time" },
     { value: "custom", label: "Custom" },
   ];

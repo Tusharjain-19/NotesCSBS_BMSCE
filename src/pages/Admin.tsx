@@ -524,23 +524,26 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent/20">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground">Manage resources and view analytics</p>
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Admin Header with Gradient */}
+        <div className="mb-8 p-6 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/20 dark:border-indigo-800/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Admin Panel</h1>
+              <p className="text-muted-foreground">Manage resources, subjects, and view analytics</p>
+            </div>
+            <Button variant="outline" onClick={handleSignOut} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
         </div>
 
         <Tabs defaultValue="resources" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="resources" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Resources
@@ -554,14 +557,16 @@ const Admin = () => {
           <TabsContent value="resources">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Add Resource Form */}
-              <Card>
+              <Card className="border-primary/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5" />
-                    Add Resource
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Plus className="h-5 w-5 text-primary" />
+                    </div>
+                    Add New Resource
                   </CardTitle>
                   <CardDescription>
-                    Add a new study material with Google Drive link
+                    Upload files or add Google Drive links
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -792,9 +797,14 @@ const Admin = () => {
               </Card>
 
               {/* Existing Resources */}
-              <Card>
+              <Card className="border-purple-200/20 dark:border-purple-800/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
                 <CardHeader>
-                  <CardTitle>Existing Resources</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-purple-500/10">
+                      <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    Existing Resources
+                  </CardTitle>
                   <CardDescription>
                     {selectedSubject 
                       ? `${resources?.length || 0} resources for selected subject`

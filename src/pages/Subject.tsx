@@ -5,71 +5,36 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ResourceCard } from "@/components/ResourceCard";
-import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { 
-  BookOpen, 
-  FileCheck, 
-  GraduationCap, 
-  ChevronDown,
-  Library
-} from "lucide-react";
+import { ChevronRight, BookOpen, FileText, Award } from "lucide-react";
 import { useState } from "react";
 
-type ResourceType = "notes" | "cie1" | "cie2" | "cie3" | "see" | "book";
-
-interface Resource {
-  id: number;
-  title: string;
-  file_url: string;
-  type: ResourceType;
-  unit: string | null;
-  year: number | null;
-}
-
-interface Unit {
-  id: number;
-  unit_number: number;
-  unit_name: string;
-}
-
-const Subject = () => {
+export default function Subject() {
   const { id } = useParams<{ id: string }>();
   const subjectId = parseInt(id || "0");
   const [openUnits, setOpenUnits] = useState<Record<number, boolean>>({
-    1: false, 2: false, 3: false, 4: false, 5: false
+    1: true,
+    2: false,
+    3: false,
+    4: false,
+    5: false,
   });
 
-  const { data: subject, isLoading: subjectLoading } = useQuery({
+  const { data: subject } = useQuery({
     queryKey: ["subject", subjectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("subjects")
-        .select("*, semesters(*)")
+        .select("*, semesters(name)")
         .eq("id", subjectId)
         .maybeSingle();
       if (error) throw error;
       return data;
-    },
-  });
-
-  const { data: resources, isLoading: resourcesLoading } = useQuery({
-    queryKey: ["resources", subjectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("resources")
-        .select("*")
-        .eq("subject_id", subjectId)
-        .order("unit")
-        .order("year", { ascending: false });
-      if (error) throw error;
-      return data as Resource[];
     },
   });
 
@@ -82,328 +47,296 @@ const Subject = () => {
         .eq("subject_id", subjectId)
         .order("unit_number");
       if (error) throw error;
-      return data as Unit[];
+      return data;
     },
   });
 
-  const isLoading = subjectLoading || resourcesLoading;
+  const { data: resources } = useQuery({
+    queryKey: ["resources", subjectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("resources")
+        .select("*")
+        .eq("subject_id", subjectId)
+        .order("year", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  // Get unit name from units table
   const getUnitName = (unitNumber: number) => {
-    const unit = units?.find(u => u.unit_number === unitNumber);
-    return unit?.unit_name || `Unit ${unitNumber}`;
+    return units?.find(u => u.unit_number === unitNumber)?.unit_name || null;
   };
 
-  // Get notes grouped by unit
   const getNotesByUnit = (unitNumber: number) => {
     return resources?.filter(r => r.type === "notes" && r.unit === `Unit ${unitNumber}`) || [];
   };
 
-  // Get CIE papers by type
-  const getCIEPapers = (type: "cie1" | "cie2" | "cie3") => {
-    return resources?.filter(r => r.type === type) || [];
+  const getCIE1Papers = () => {
+    return resources?.filter(r => r.type === "cie1") || [];
   };
 
-  // Get SEE papers
+  const getCIE2Papers = () => {
+    return resources?.filter(r => r.type === "cie2") || [];
+  };
+
+  const getCIE3Papers = () => {
+    return resources?.filter(r => r.type === "cie3") || [];
+  };
+
   const getSEEPapers = () => {
     return resources?.filter(r => r.type === "see") || [];
   };
 
-  // Get Book resources
   const getBooks = () => {
     return resources?.filter(r => r.type === "book") || [];
-  };
-
-  // Check if subject is mathematics-related
-  const isMathematicsSubject = () => {
-    const name = subject?.name?.toLowerCase() || "";
-    return name.includes("math") || name.includes("maths") || name.includes("mathematics");
   };
 
   const toggleUnit = (unit: number) => {
     setOpenUnits(prev => ({ ...prev, [unit]: !prev[unit] }));
   };
 
-  const cieConfig = [
-    { type: "cie1" as const, label: "CIE-1 Question Papers" },
-    { type: "cie2" as const, label: "CIE-2 Question Papers" },
-    { type: "cie3" as const, label: "CIE-3 Question Papers" },
-  ];
-
-  // Check if subject has units (Sem 7 & 8 subjects don't have units)
   const hasUnits = units && units.length > 0;
+  const cie1Papers = getCIE1Papers();
+  const cie2Papers = getCIE2Papers();
+  const cie3Papers = getCIE3Papers();
+  const seePapers = getSEEPapers();
+  const books = getBooks();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-accent/20 flex flex-col">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 flex-1">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 max-w-5xl pb-24">
         <Breadcrumb 
           items={[
-            { 
-              label: subject?.semesters?.name || "Semester", 
-              href: `/semester/${subject?.semester_id}` 
-            },
+            { label: "Home", href: "/" },
+            { label: subject?.semesters?.name || "Semester", href: `/semester/${subject?.semester_id}` },
             { label: subject?.name || "Loading..." }
           ]} 
         />
 
-        {/* Subject Header */}
-        <div className="mb-8 animate-fade-in">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {subject?.name || "Loading..."}
-            </h1>
-            {subject?.is_lab && (
-              <Badge variant="default" className="bg-primary/20 text-primary border-0">
-                Lab
-              </Badge>
-            )}
-          </div>
-          <p className="text-muted-foreground flex items-center gap-2">
-            <Badge variant="outline">{subject?.code}</Badge>
+        {/* Subject Header with Gradient */}
+        <div className="mb-8 mt-6 p-6 rounded-xl bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border border-primary/20">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            {subject?.name || "Loading..."}
+          </h1>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
+            <span className="font-mono px-2 py-1 bg-primary/20 text-primary rounded">{subject?.code}</span>
             <span>•</span>
             <span>{subject?.semesters?.name}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            All available resources for this subject
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-48" />
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-lg" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-10">
-            {/* SECTION 1: NOTES (Unit-wise) - Only show for subjects with units */}
-            {hasUnits && (
-              <section className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <BookOpen className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">Notes</h2>
-                    <p className="text-sm text-muted-foreground">Study materials organized by unit</p>
-                  </div>
+        <div className="space-y-8">
+          {/* SECTION 1: NOTES BY UNIT */}
+          {hasUnits && (
+            <section className="p-6 rounded-xl bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-200/20 dark:border-blue-800/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
+                <h2 className="text-xl font-bold text-foreground">Notes</h2>
+              </div>
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map((unitNum) => {
+                  const unitNotes = getNotesByUnit(unitNum);
+                  const unitName = getUnitName(unitNum);
+                  if (!unitName) return null;
 
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((unitNum) => {
-                    const unitNotes = getNotesByUnit(unitNum);
-                    const unitName = getUnitName(unitNum);
-                    return (
-                      <Collapsible
-                        key={unitNum}
-                        open={openUnits[unitNum]}
-                        onOpenChange={() => toggleUnit(unitNum)}
-                      >
-                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-card p-4 text-left transition-all hover:border-primary/30 hover:bg-accent/50">
-                          <div className="flex items-center gap-3">
-                            <Badge variant="secondary" className="font-semibold shrink-0">
-                              Unit {unitNum}
-                            </Badge>
-                            <span className="text-sm text-foreground font-medium">
+                  return (
+                    <Collapsible
+                      key={unitNum}
+                      open={openUnits[unitNum]}
+                      onOpenChange={() => toggleUnit(unitNum)}
+                    >
+                      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-card/50 backdrop-blur-sm px-4 py-3.5 text-left hover:bg-accent/50 hover:border-primary/40 transition-all duration-200 group">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm">
+                            {unitNum}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground group-hover:text-primary transition-colors">
                               {unitName}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              ({unitNotes.length} {unitNotes.length === 1 ? "file" : "files"})
-                            </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {unitNotes.length} {unitNotes.length === 1 ? 'file' : 'files'}
+                            </div>
                           </div>
-                          <ChevronDown 
-                            className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
-                              openUnits[unitNum] ? "rotate-180" : ""
-                            }`} 
-                          />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="pt-3">
-                          {unitNotes.length > 0 ? (
-                            <div className="grid gap-3 pl-4 border-l-2 border-primary/20 ml-4">
-                              {unitNotes.map((resource, index) => (
-                                <ResourceCard
-                                  key={resource.id}
-                                  id={resource.id}
-                                  title={resource.title}
-                                  fileUrl={resource.file_url}
-                                  year={resource.year}
-                                  index={index}
-                                />
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="pl-4 border-l-2 border-primary/20 ml-4 py-4">
-                              <p className="text-sm text-muted-foreground">No notes available yet</p>
-                            </div>
-                          )}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* For Sem 7 & 8 subjects without units - show simple notes section */}
-            {!hasUnits && (
-              <section className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <BookOpen className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">Resources</h2>
-                    <p className="text-sm text-muted-foreground">Study materials and documents</p>
-                  </div>
-                </div>
-
-                {resources && resources.filter(r => r.type === "notes").length > 0 ? (
-                  <div className="grid gap-3">
-                    {resources.filter(r => r.type === "notes").map((resource, index) => (
-                      <ResourceCard
-                        key={resource.id}
-                        id={resource.id}
-                        title={resource.title}
-                        fileUrl={resource.file_url}
-                        year={resource.year}
-                        index={index}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState 
-                    title="No resources available"
-                    description="Resources will be added soon. Check back later!"
-                  />
-                )}
-              </section>
-            )}
-
-            {/* SECTION 2: CIE Papers (Exam-wise) - Only show for subjects with units */}
-            {hasUnits && (
-              <section className="animate-fade-in" style={{ animationDelay: "100ms" }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                    <FileCheck className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">CIE Papers</h2>
-                    <p className="text-sm text-muted-foreground">Continuous Internal Evaluation question papers</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-6 md:grid-cols-3">
-                  {cieConfig.map(({ type, label }) => {
-                    const papers = getCIEPapers(type);
-                    return (
-                      <div key={type} className="rounded-lg border border-border/50 bg-card p-4">
-                        <h3 className="font-semibold text-foreground mb-3">{label}</h3>
-                        {papers.length > 0 ? (
-                          <div className="space-y-3">
-                            {papers.map((resource, index) => (
+                        </div>
+                        <ChevronRight className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${openUnits[unitNum] ? 'rotate-90' : ''}`} />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-2 pb-1">
+                        {unitNotes.length > 0 ? (
+                          <div className="space-y-2 pl-6">
+                            {unitNotes.map((resource) => (
                               <ResourceCard
                                 key={resource.id}
                                 id={resource.id}
                                 title={resource.title}
                                 fileUrl={resource.file_url}
                                 year={resource.year}
-                                index={index}
+                                type={resource.type}
                               />
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground py-4">No papers available</p>
+                          <p className="text-sm text-muted-foreground py-4 px-6">
+                            No files available for this unit
+                          </p>
                         )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-            {/* SECTION 3: SEE Papers - Only show for subjects with units */}
-            {hasUnits && (
-              <section className="animate-fade-in" style={{ animationDelay: "200ms" }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
-                    <GraduationCap className="h-5 w-5" />
-                  </div>
+          {/* SECTION 2: EXAM PAPERS */}
+          {hasUnits && (cie1Papers.length > 0 || cie2Papers.length > 0 || cie3Papers.length > 0 || seePapers.length > 0) && (
+            <section className="p-6 rounded-xl bg-gradient-to-br from-purple-500/5 to-pink-500/5 border border-purple-200/20 dark:border-purple-800/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">Exam Papers</h2>
+              </div>
+              
+              <div className="space-y-6">
+                {/* CIE-1 Papers */}
+                {cie1Papers.length > 0 && (
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground">SEE Papers</h2>
-                    <p className="text-sm text-muted-foreground">Semester End Examination previous year papers</p>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-blue-500"></span>
+                      CIE-1 Papers
+                    </h3>
+                    <div className="space-y-2">
+                      {cie1Papers.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          id={resource.id}
+                          title={resource.title}
+                          fileUrl={resource.file_url}
+                          year={resource.year}
+                          type={resource.type}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {getSEEPapers().length > 0 ? (
-                  <div className="grid gap-3">
-                    {getSEEPapers().map((resource, index) => (
-                      <ResourceCard
-                        key={resource.id}
-                        id={resource.id}
-                        title={resource.title}
-                        fileUrl={resource.file_url}
-                        year={resource.year}
-                        index={index}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState 
-                    title="No SEE papers available"
-                    description="Previous year SEE papers will be added soon. Check back later!"
-                  />
                 )}
-              </section>
-            )}
 
-            {/* SECTION 4: Books / Question Bank */}
-            <section className="animate-fade-in" style={{ animationDelay: "300ms" }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500">
-                  <Library className="h-5 w-5" />
+                {/* CIE-2 Papers */}
+                {cie2Papers.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-purple-500"></span>
+                      CIE-2 Papers
+                    </h3>
+                    <div className="space-y-2">
+                      {cie2Papers.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          id={resource.id}
+                          title={resource.title}
+                          fileUrl={resource.file_url}
+                          year={resource.year}
+                          type={resource.type}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* CIE-3 Papers */}
+                {cie3Papers.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-pink-500"></span>
+                      CIE-3 Papers
+                    </h3>
+                    <div className="space-y-2">
+                      {cie3Papers.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          id={resource.id}
+                          title={resource.title}
+                          fileUrl={resource.file_url}
+                          year={resource.year}
+                          type={resource.type}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SEE Papers */}
+                {seePapers.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-green-500"></span>
+                      SEE Papers
+                    </h3>
+                    <div className="space-y-2">
+                      {seePapers.map((resource) => (
+                        <ResourceCard
+                          key={resource.id}
+                          id={resource.id}
+                          title={resource.title}
+                          fileUrl={resource.file_url}
+                          year={resource.year}
+                          type={resource.type}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* SECTION 3: REFERENCE BOOKS */}
+          {books.length > 0 && (
+            <section className="p-6 rounded-xl bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-200/20 dark:border-amber-800/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">
-                    {isMathematicsSubject() ? "Question Bank" : "Books"}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {isMathematicsSubject() 
-                      ? "Practice questions and problem sets" 
-                      : "Reference books and textbooks"}
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-foreground">Reference Books</h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Recommended textbooks for this subject
                   </p>
                 </div>
               </div>
-
-              {getBooks().length > 0 ? (
-                <div className="grid gap-3">
-                  {getBooks().map((resource, index) => (
-                    <ResourceCard
-                      key={resource.id}
-                      id={resource.id}
-                      title={resource.title}
-                      fileUrl={resource.file_url}
-                      year={resource.year}
-                      index={index}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState 
-                  title={isMathematicsSubject() ? "No question bank available" : "No books available"}
-                  description={isMathematicsSubject() 
-                    ? "Practice questions will be added soon. Check back later!"
-                    : "Reference books will be added soon. Check back later!"}
-                />
-              )}
+              <div className="space-y-2">
+                {books.map((resource) => (
+                  <ResourceCard
+                    key={resource.id}
+                    id={resource.id}
+                    title={resource.title}
+                    fileUrl={resource.file_url}
+                    year={resource.year}
+                    type={resource.type}
+                  />
+                ))}
+              </div>
             </section>
-          </div>
-        )}
+          )}
+
+          {!hasUnits && resources?.length === 0 && (
+            <div className="text-center py-16 border border-dashed border-border rounded-xl">
+              <p className="text-sm text-muted-foreground">
+                No resources available for this subject yet
+              </p>
+            </div>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
   );
-};
-
-export default Subject;
+}

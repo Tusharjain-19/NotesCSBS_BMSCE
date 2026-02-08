@@ -1,38 +1,35 @@
 import { Link } from "react-router-dom";
-import { BookOpen, GraduationCap, FileText, Beaker } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ChevronRight } from "lucide-react";
 
 interface SemesterCardProps {
   id: number;
   name: string;
   order: number;
-  index: number;
+  index?: number;
 }
 
-const semesterIcons = [BookOpen, GraduationCap, FileText, Beaker];
-
-export function SemesterCard({ id, name, order, index }: SemesterCardProps) {
-  const Icon = semesterIcons[index % semesterIcons.length];
-  
+export function SemesterCard({ id, name, order }: SemesterCardProps) {
   return (
-    <Link to={`/semester/${id}`}>
-      <Card 
-        className="group relative overflow-hidden border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg h-full"
-        style={{ animationDelay: `${index * 100}ms` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        <CardContent className="relative flex flex-col items-center gap-2 sm:gap-4 p-4 sm:p-6">
-          <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20">
-            <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
+    <Link
+      to={`/semester/${id}`}
+      className="group relative flex items-center justify-between p-6 rounded-xl border border-border bg-card hover:bg-gradient-to-r hover:from-primary/5 hover:to-purple-500/5 hover:border-primary/40 hover:shadow-soft-lg hover:scale-[1.02] transition-all duration-300"
+    >
+      <div className="flex-1">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+            {order}
           </div>
-          <div className="text-center">
-            <h3 className="font-semibold text-foreground text-sm sm:text-base">{name}</h3>
-            <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground hidden sm:block">
-              View all subjects
+          <div>
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+              {name}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              View subjects & resources
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
     </Link>
   );
 }

@@ -180,15 +180,6 @@ export function AnalyticsDashboard() {
         <CardContent className="py-3">
           <p className="text-sm text-muted-foreground">
             📊 Analytics data is aggregated from your published site. Data shown is for the last 7 days by default.
-            For real-time analytics, visit the{" "}
-            <a
-              href="https://lovable.dev/projects/2db7b5b4-a418-4c9b-9ead-cd106b551e08/settings?tab=analytics"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline hover:no-underline"
-            >
-              Lovable Analytics Dashboard
-            </a>.
           </p>
         </CardContent>
       </Card>

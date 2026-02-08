@@ -2,7 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Notes CSBS" />
+    <link rel="icon" type="image/png" href="/src/assets/notes-csbs-logo.png" />
+    <link rel="apple-touch-icon" href="/src/assets/notes-csbs-logo.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Notes CSBS" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Speed: Font Optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Safety: Security Headers (Meta) -->
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <title>Notes CSBS | BMSCE CSBS Academic Resources</title>
     <meta name="description" content="All CSBS academic resources in one place - Notes, Question Banks, CIE Materials, SEE PYQs, and Lab resources for BMS College of Engineering students." />
     <meta name="author" content="Notes CSBS" />
@@ -11,14 +32,23 @@
     <meta property="og:title" content="Notes CSBS | BMSCE CSBS Academic Resources" />
     <meta property="og:description" content="All CSBS academic resources in one place - Notes, Question Banks, CIE Materials, SEE PYQs, and Lab resources." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Notes CSBS | BMSCE CSBS Resources" />
     <meta name="twitter:description" content="All CSBS academic resources in one place." />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
-    <link rel="canonical" href="https://notes-csbs.lovable.app" />
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('theme');
+          var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+          if (!theme && supportDarkMode) theme = 'dark';
+          if (!theme) theme = 'dark'; // Force dark as default
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>

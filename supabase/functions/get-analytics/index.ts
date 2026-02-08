@@ -10,8 +10,12 @@ interface AnalyticsData {
   pageviews: number;
   avg_duration_seconds: number;
   bounce_rate: number;
+  current_visitors: number;
   top_pages: { path: string; views: number }[];
   timeseries: { date: string; visitors: number; pageviews: number }[];
+  sources: { source: string; visitors: number }[];
+  devices: { device: string; visitors: number; percentage: number }[];
+  geo: { country: string; visitors: number; cities?: { city: string; visitors: number }[] }[];
 }
 
 serve(async (req) => {
@@ -21,49 +25,28 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const startDate = url.searchParams.get('startDate');
-    const endDate = url.searchParams.get('endDate');
-    const granularity = url.searchParams.get('granularity') || 'daily';
+    // NOTE: This is a placeholder function. 
+    // The original function called Lovable's analytics API which has been removed.
+    // You can implement your own analytics tracking here using a service like:
+    // - Google Analytics
+    // - Plausible
+    // - Umami
+    // - Custom analytics solution
 
-    console.log(`Fetching analytics: startDate=${startDate}, endDate=${endDate}, granularity=${granularity}`);
-
-    // Get the internal analytics API URL
-    const projectId = Deno.env.get('SUPABASE_PROJECT_ID') || 'xqlvzzfyspbbpghjoeue';
-    const analyticsUrl = `https://api.lovable.dev/v1/projects/${projectId}/analytics`;
-    
-    // Build query params
-    const params = new URLSearchParams();
-    if (startDate) params.set('startdate', startDate);
-    if (endDate) params.set('enddate', endDate);
-    params.set('granularity', granularity);
-
-    const response = await fetch(`${analyticsUrl}?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`Analytics API returned ${response.status}: ${await response.text()}`);
-      throw new Error(`Failed to fetch analytics: ${response.status}`);
-    }
-
-    const rawData = await response.json();
-    console.log('Raw analytics response:', JSON.stringify(rawData).slice(0, 500));
-
-    // Process and format the data
-    const analyticsData: AnalyticsData = {
-      visitors: rawData.visitors || 0,
-      pageviews: rawData.pageviews || 0,
-      avg_duration_seconds: rawData.avg_duration_seconds || 0,
-      bounce_rate: rawData.bounce_rate || 0,
-      top_pages: rawData.top_pages || [],
-      timeseries: rawData.timeseries || [],
+    const mockData: AnalyticsData = {
+      visitors: 0,
+      pageviews: 0,
+      avg_duration_seconds: 0,
+      bounce_rate: 0,
+      current_visitors: 0,
+      top_pages: [],
+      timeseries: [],
+      sources: [],
+      devices: [],
+      geo: [],
     };
 
-    return new Response(JSON.stringify(analyticsData), {
+    return new Response(JSON.stringify(mockData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

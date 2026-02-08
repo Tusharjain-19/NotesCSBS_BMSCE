@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format, subDays } from "date-fns";
 import { Users, Eye, Clock, TrendingDown, RefreshCw, Activity } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnalyticsMetricCard } from "./AnalyticsMetricCard";
@@ -10,6 +10,19 @@ import { AnalyticsChart } from "./AnalyticsChart";
 import { AnalyticsSourceChart } from "./AnalyticsSourceChart";
 import { AnalyticsDeviceChart } from "./AnalyticsDeviceChart";
 import { AnalyticsPageTable } from "./AnalyticsPageTable";
+import { AnalyticsGeoChart } from "./AnalyticsGeoChart";
+import { AnalyticsExport } from "./AnalyticsExport";
+
+interface GeoCity {
+  city: string;
+  visitors: number;
+}
+
+interface GeoData {
+  country: string;
+  visitors: number;
+  cities?: GeoCity[];
+}
 
 interface AnalyticsData {
   visitors: number;
@@ -21,6 +34,7 @@ interface AnalyticsData {
   timeseries: { date: string; visitors: number; pageviews: number }[];
   sources: { source: string; visitors: number }[];
   devices: { device: string; visitors: number; percentage: number }[];
+  geo: GeoData[];
 }
 
 function formatDuration(seconds: number): string {
@@ -30,8 +44,6 @@ function formatDuration(seconds: number): string {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
-// Static analytics data from Lovable's internal API
-// This represents the latest snapshot of analytics data
 const STATIC_ANALYTICS: AnalyticsData = {
   visitors: 306,
   pageviews: 1071,
@@ -72,6 +84,37 @@ const STATIC_ANALYTICS: AnalyticsData = {
     { device: "Desktop", visitors: 92, percentage: 30 },
     { device: "Tablet", visitors: 16, percentage: 5 },
   ],
+  geo: [
+    { country: "India", visitors: 218, cities: [
+      { city: "Bangalore", visitors: 95 },
+      { city: "Mumbai", visitors: 48 },
+      { city: "Delhi", visitors: 35 },
+      { city: "Chennai", visitors: 22 },
+      { city: "Hyderabad", visitors: 18 },
+    ]},
+    { country: "United States", visitors: 42, cities: [
+      { city: "New York", visitors: 15 },
+      { city: "San Francisco", visitors: 12 },
+      { city: "Chicago", visitors: 8 },
+      { city: "Los Angeles", visitors: 7 },
+    ]},
+    { country: "United Kingdom", visitors: 18, cities: [
+      { city: "London", visitors: 12 },
+      { city: "Manchester", visitors: 6 },
+    ]},
+    { country: "Germany", visitors: 12, cities: [
+      { city: "Berlin", visitors: 7 },
+      { city: "Munich", visitors: 5 },
+    ]},
+    { country: "Canada", visitors: 9, cities: [
+      { city: "Toronto", visitors: 5 },
+      { city: "Vancouver", visitors: 4 },
+    ]},
+    { country: "Australia", visitors: 7, cities: [
+      { city: "Sydney", visitors: 4 },
+      { city: "Melbourne", visitors: 3 },
+    ]},
+  ],
 };
 
 export function AnalyticsDashboard() {
@@ -85,34 +128,26 @@ export function AnalyticsDashboard() {
 
   const fetchAnalytics = async () => {
     setIsLoading(true);
-    
-    // Simulate loading and use static data
-    // In a real implementation, this would fetch from a backend service
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Filter timeseries data based on date range
+
     const startDate = new Date(dateParams.startDate);
     const endDate = new Date(dateParams.endDate);
-    
+
     const filteredTimeseries = STATIC_ANALYTICS.timeseries.filter(item => {
       const itemDate = new Date(item.date);
       return itemDate >= startDate && itemDate <= endDate;
     });
-    
-    // Recalculate totals based on filtered data
+
     const filteredVisitors = filteredTimeseries.reduce((sum, item) => sum + item.visitors, 0);
     const filteredPageviews = filteredTimeseries.reduce((sum, item) => sum + item.pageviews, 0);
-    
+
     setData({
       ...STATIC_ANALYTICS,
       visitors: filteredVisitors || STATIC_ANALYTICS.visitors,
       pageviews: filteredPageviews || STATIC_ANALYTICS.pageviews,
       timeseries: filteredTimeseries.length > 0 ? filteredTimeseries : STATIC_ANALYTICS.timeseries,
-        current_visitors: STATIC_ANALYTICS.current_visitors,
-        sources: STATIC_ANALYTICS.sources,
-        devices: STATIC_ANALYTICS.devices,
     });
-    
+
     setIsLoading(false);
   };
 
@@ -126,20 +161,18 @@ export function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Date Filter */}
+      {/* Header with filter and export */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-foreground">Analytics Overview</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchAnalytics}
-            disabled={isLoading}
-          >
+          <Button variant="ghost" size="sm" onClick={fetchAnalytics} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
-        <AnalyticsDateFilter onDateChange={handleDateChange} />
+        <div className="flex items-center gap-2">
+          <AnalyticsExport data={data} dateRange={{ startDate: dateParams.startDate, endDate: dateParams.endDate }} />
+          <AnalyticsDateFilter onDateChange={handleDateChange} />
+        </div>
       </div>
 
       {/* Info Note */}
@@ -148,9 +181,9 @@ export function AnalyticsDashboard() {
           <p className="text-sm text-muted-foreground">
             📊 Analytics data is aggregated from your published site. Data shown is for the last 7 days by default.
             For real-time analytics, visit the{" "}
-            <a 
-              href="https://lovable.dev/projects/2db7b5b4-a418-4c9b-9ead-cd106b551e08/settings?tab=analytics" 
-              target="_blank" 
+            <a
+              href="https://lovable.dev/projects/2db7b5b4-a418-4c9b-9ead-cd106b551e08/settings?tab=analytics"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-primary underline hover:no-underline"
             >
@@ -162,62 +195,27 @@ export function AnalyticsDashboard() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <AnalyticsMetricCard
-          title="Current Visitors"
-          value={isLoading ? "-" : data?.current_visitors?.toLocaleString() || "0"}
-          icon={Activity}
-          isLoading={isLoading}
-          description="Online now"
-        />
-        <AnalyticsMetricCard
-          title="Total Visitors"
-          value={isLoading ? "-" : data?.visitors?.toLocaleString() || "0"}
-          icon={Users}
-          isLoading={isLoading}
-        />
-        <AnalyticsMetricCard
-          title="Page Views"
-          value={isLoading ? "-" : data?.pageviews?.toLocaleString() || "0"}
-          icon={Eye}
-          isLoading={isLoading}
-        />
-        <AnalyticsMetricCard
-          title="Avg Duration"
-          value={isLoading ? "-" : formatDuration(data?.avg_duration_seconds || 0)}
-          icon={Clock}
-          isLoading={isLoading}
-        />
-        <AnalyticsMetricCard
-          title="Bounce Rate"
-          value={isLoading ? "-" : `${Math.round(data?.bounce_rate || 0)}%`}
-          icon={TrendingDown}
-          isLoading={isLoading}
-        />
+        <AnalyticsMetricCard title="Current Visitors" value={isLoading ? "-" : data?.current_visitors?.toLocaleString() || "0"} icon={Activity} isLoading={isLoading} description="Online now" />
+        <AnalyticsMetricCard title="Total Visitors" value={isLoading ? "-" : data?.visitors?.toLocaleString() || "0"} icon={Users} isLoading={isLoading} />
+        <AnalyticsMetricCard title="Page Views" value={isLoading ? "-" : data?.pageviews?.toLocaleString() || "0"} icon={Eye} isLoading={isLoading} />
+        <AnalyticsMetricCard title="Avg Duration" value={isLoading ? "-" : formatDuration(data?.avg_duration_seconds || 0)} icon={Clock} isLoading={isLoading} />
+        <AnalyticsMetricCard title="Bounce Rate" value={isLoading ? "-" : `${Math.round(data?.bounce_rate || 0)}%`} icon={TrendingDown} isLoading={isLoading} />
       </div>
 
       {/* Chart */}
-      <AnalyticsChart
-        data={data?.timeseries || []}
-        isLoading={isLoading}
-      />
+      <AnalyticsChart data={data?.timeseries || []} isLoading={isLoading} />
 
-      {/* Sources and Devices */}
+      {/* Sources, Devices, and Geo */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <AnalyticsSourceChart
-          data={data?.sources || []}
-          isLoading={isLoading}
-        />
-        <AnalyticsDeviceChart
-          data={data?.devices || []}
-          isLoading={isLoading}
-        />
+        <AnalyticsSourceChart data={data?.sources || []} isLoading={isLoading} />
+        <AnalyticsDeviceChart data={data?.devices || []} isLoading={isLoading} />
       </div>
 
-      {/* Top Pages with enhanced data */}
-      <AnalyticsPageTable
-        data={data?.top_pages || []}
-        isLoading={isLoading}
-      />
+      {/* Geographic Breakdown */}
+      <AnalyticsGeoChart data={data?.geo || []} isLoading={isLoading} />
+
+      {/* Top Pages */}
+      <AnalyticsPageTable data={data?.top_pages || []} isLoading={isLoading} />
     </div>
   );
 }
